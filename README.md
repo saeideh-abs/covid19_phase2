@@ -9,7 +9,8 @@ in this project we are using python3.7
 ### in unix os
 
 change directory to phase2
-`virtualenv -p python3.7 venv`
+
+then type this script for create virtualenv `virtualenv -p python3.7 venv`
 
 
 ## Data 
@@ -21,5 +22,6 @@ all data in should exist in this folder
 ## Requirements
 
 make sure you are in the correct virtualenv and type
-`pip install -r requirements.txt`
+
+type this script for install all requirements `pip install -r requirements.txt`
 

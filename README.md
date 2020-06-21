@@ -5,20 +5,20 @@ in this project we are using python3.7
 
 
 
-#**** Virtualenv****
-# in unix os
+## Virtualenv
+### in unix os
 
 change directory to phase2
 `virtualenv -p python3.7 venv`
 
 
-#Data 
+## Data 
 
 in .gitignore file ignore this folder
 all data in should exist in this folder 
 
 
-# Requirements
+## Requirements
 
 make sure you are in the correct virtualenv and type
 `pip install -r requirements.txt`

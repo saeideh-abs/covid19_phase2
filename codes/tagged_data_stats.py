@@ -15,18 +15,6 @@ def value_counts(series, data_title):
     print(data_title, " value counts:\n", series.value_counts())
 
 
-# def unrelated_posts_stats(unrelated_series):
-#     print("____________ unrelated posts stats ___________")
-#     print("total number of unrelated posts:", unrelated_series.size)
-#     print("unrelated posts value counts:\n", unrelated_series.value_counts())
-#
-#
-# def valueless_posts_stats(valueless_series):
-#     print("____________ valueless posts stats ___________")
-#     print("total number of valueless posts:", valueless_series.size)
-#     print("valueless posts value counts:\n", valueless_series.value_counts())
-
-
 if __name__ == '__main__':
     tagged_data = pd.read_csv('../data/manual_tag/Labeled-Data-v1.csv')
 

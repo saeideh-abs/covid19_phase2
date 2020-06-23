@@ -24,3 +24,4 @@ if __name__ == '__main__':
     clean_data = clean_data.drop(valueless_data_indices)
 
     print("total number of posts after removing useless posts: ", len(clean_data))
+    clean_data.to_csv('../data/manual_tag/clean_labeled_data.csv', index=False)

@@ -1,3 +1,6 @@
 venv
 .idea
 data/manual_tag
+data/pre_process_1
+data/pre_process_2
+data/raw_data

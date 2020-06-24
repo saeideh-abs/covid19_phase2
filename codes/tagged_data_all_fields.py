@@ -7,7 +7,7 @@ import gc
 def get_preprocessed_data_paths():
     files_path = []
     # because of the lake of memory I used this way: in each run changed the social type to news, telegram , ...
-    social_type = ['telegram']
+    social_type = ['twitter']
 
     for type in social_type:
         for i in range(1, 10):
@@ -24,7 +24,7 @@ def search_for_fields(path, tagged_data, all_fields_df):
     # search for post ids
     condition = df['postId'].isin(post_ids)  # returns list of true/false
     common_post_ids = df.loc[condition, 'postId']
-    print(len(common_post_ids))
+    # print(len(common_post_ids))
     if len(common_post_ids) == 0:
         return all_fields_df
 

@@ -32,7 +32,7 @@ sys.path.extend([os.getcwd()])
 path = os.getcwd()
 parent_dir = os.path.abspath(os.path.join(path, os.pardir))
 
-ex_instance = Extraction('{}/data/manual_tag/clean_labeled_data.csv'.format(path))
+ex_instance = Extraction('{}/data/manual_tag/clean_labeled_data.csv'.format(parent_dir))
 row_args_list, dataframe = ex_instance.extract_emotional_posts(ex_instance.emotional_tags)
 final_df_emotions = ex_instance.write_emotional_posts_to_csv(row_args_list, dataframe, 'statistics', 'emotions')
 

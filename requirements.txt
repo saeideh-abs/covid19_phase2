@@ -1,9 +1,13 @@
+hazm==0.7.1
 joblib==0.15.1
+libwapiti==0.2.1
+nltk==3.4
 numpy==1.19.0
 pandas==1.0.5
 python-dateutil==2.8.1
 pytz==2020.1
 scikit-learn==0.23.1
 scipy==1.4.1
+singledispatch==3.4.0.3
 six==1.15.0
 threadpoolctl==2.1.0

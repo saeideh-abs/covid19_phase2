@@ -1,5 +1,13 @@
-gensim
+boto==2.49.0
+boto3==1.14.11
+botocore==1.17.11
+certifi==2020.6.20
+chardet==3.0.4
+docutils==0.15.2
+gensim==3.8.3
 hazm==0.7.1
+idna==2.9
+jmespath==0.10.0
 joblib==0.15.1
 libwapiti==0.2.1
 nltk==3.4
@@ -7,8 +15,12 @@ numpy==1.19.0
 pandas==1.0.5
 python-dateutil==2.8.1
 pytz==2020.1
+requests==2.24.0
+s3transfer==0.3.3
 scikit-learn==0.23.1
 scipy==1.4.1
 singledispatch==3.4.0.3
 six==1.15.0
+smart-open==2.0.0
 threadpoolctl==2.1.0
+urllib3==1.25.9

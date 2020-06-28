@@ -1,9 +1,10 @@
+# %%
 from __future__ import unicode_literals
 import os
 import sys
 import pandas as pd
 import numpy as np
-from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.feature_extraction.text import TfidfVectorizer, CountVectorizer
 from sklearn.model_selection import train_test_split
 from sklearn.svm import SVC
 from hazm import Normalizer
@@ -12,9 +13,9 @@ from hazm import Normalizer
 class Embedding():
 
     def __init__(self):
-        self.polarity = ['مثبت', 'منفی', 'خنثی']
-        self.emotional_tags = ['شادی', 'غم', 'ترس', 'تنفر', 'خشم', 'شگفتی', 'اعتماد', 'پیش‌بینی', 'سایر هیجانات',
-                               'استرس']
+        self.polarity = {0: 'مثبت', 1: 'منفی', 2: 'خنثی'}
+        self.emotional_tags = {0: 'شادی', 1: 'غم', 2: 'ترس', 3: 'تنفر', 4: 'خشم', 5: 'شگفتی', 6: 'اعتماد',
+                               7: 'پیش‌بینی', 8: 'سایر هیجانات', 9: 'استرس'}
 
     @staticmethod
     def tfidf_embedding(sentences_list, labels, test_size):
@@ -50,7 +51,8 @@ class Embedding():
     def seperate_content_lables(self, filename, content, label_fields):
         df = pd.read_csv(filename)
         content = df.loc[:, content]
-        labels = df.loc[:, label_fields].to_numpy()
+        print([item for item in label_fields.values()])
+        labels = df.loc[:, [item for item in label_fields.values()]].to_numpy()
         return content, labels
 
     @staticmethod
@@ -64,12 +66,117 @@ class Embedding():
             normalize_content.append(normalizer.normalize(elem))
         return content
 
+    @staticmethod
+    def compute_label_sets_occurances(train_labels):
+        labels, occurs = np.unique(train_labels, return_counts=True)
+        return labels, dict(zip(labels, occurs))
+
+    def doc_term(self, sentences_list, labels, test_size, n_gram: int):
+        vectorizer = CountVectorizer(binary=True, ngram_range=(n_gram, n_gram))
+        x_train, x_test, y_train, y_test = train_test_split(sentences_list, labels, test_size=test_size)
+        y_train_one_label = Embedding.multi_label_to_one_label(y_train)
+        tf_idf_vector_train = vectorizer.fit_transform(x_train)
+        features = dict(enumerate(vectorizer.get_feature_names()))
+        info_gain_dt_matrix = np.zeros((tf_idf_vector_train.shape[0], tf_idf_vector_train.shape[1] + 1))
+        info_gain_dt_matrix[:, 1:] = tf_idf_vector_train.toarray()
+        info_gain_dt_matrix[:, 0] = y_train_one_label
+        self.labels_set, self.label_occurances = Embedding.compute_label_sets_occurances(y_train_one_label)
+        return info_gain_dt_matrix, features
+
+    def top_100_words(self, features, info_gain_matrix, p_c_i, tags_type):
+        words_polarity_score = []
+        words = []
+        info_gain = []
+        arg_max_p_c_i = np.argmax(p_c_i, axis=0)
+        for arg in np.argsort(info_gain_matrix)[-100:][::-1]:
+            words.append(features[arg])
+            if tags_type == 'emotions':
+                words_polarity_score.append(
+                    {'کلمه': features[arg], 'قطبیت': self.emotional_tags[arg_max_p_c_i[arg]],
+                     'امتیاز': np.round(info_gain_matrix[arg], decimals=5)})
+            elif tags_type == 'polarity':
+                words_polarity_score.append(
+                    {'کلمه': features[arg], 'قطبیت': self.polarity[arg_max_p_c_i[arg]],
+                     'امتیاز': np.round(info_gain_matrix[arg], decimals=5)})
+            info_gain.append(info_gain_matrix[arg])
+        max_info_gain = np.max(info_gain)
+        min_info_gain = np.min(info_gain)
+        normalize_info_gain = []
+        for info_gain in info_gain:
+            normalize_info_gain.append(
+                np.multiply(np.add(np.divide(np.subtract(info_gain, min_info_gain),
+                                             np.subtract(max_info_gain, min_info_gain)), 1), 10))
+        return words_polarity_score, words, normalize_info_gain
+
+    def compute_label_entropies(self, train_labels):
+        labels, label_occurances = Embedding.compute_label_sets_occurances(train_labels)
+        sigma = 0
+        for key, value in label_occurances.items():
+            prob = float(value) / self.N
+            entropy = np.multiply(prob, np.log2(prob))
+            sigma += entropy
+        sigma *= -1
+        return sigma
+
+    # compute N(W) and N(~W)
+    def compute_n_w_n_w_not(self, d_t_matrix):
+        self.N = d_t_matrix.shape[0]
+        temp_matrix = d_t_matrix[:, 1:]
+        # todo make matrix sparse for fewer time
+        n_w_matrix = np.sum(temp_matrix, axis=0)
+        n_w_not_matrix = self.N - n_w_matrix
+        return n_w_matrix, n_w_not_matrix
+
+    # compute P(W) and P(~W)
+    def compute_p_w_p_w_not(self, d_t_matrix):
+        n_w_matrix, n_w_not_matrix = self.compute_n_w_n_w_not(d_t_matrix)
+        p_w_matrix = n_w_matrix / self.N
+        p_w_not_matrix = n_w_not_matrix / self.N
+        return n_w_matrix, p_w_matrix, n_w_not_matrix, p_w_not_matrix
+
+    def information_gain(self, d_t_matrix, train_labels):
+        n_w_matrix, p_w_matrix, n_w_not_matrix, p_w_not_matrix = self.compute_p_w_p_w_not(d_t_matrix)
+        sigma = np.zeros(d_t_matrix.shape[1] - 1)
+        # compute sigma P(Ci|w) * log(P(Ci|w) + P(Ci|~w) * log(P(Ci|~w)
+        p_c_i_w_matrix_save = []
+        temp_matrix = d_t_matrix[:, 1:]
+        for label in self.labels_set:
+            poet_matrix = np.zeros(d_t_matrix.shape[0])
+            poet_rows = np.where(d_t_matrix[:, 0] == label)
+            poet_matrix[poet_rows] = 1
+            poet_matrix = poet_matrix.astype(bool)
+            poet_matrix = poet_matrix.reshape(poet_matrix.shape[0], 1)
+
+            # temp_matrix[:, 0] = 0
+            # compute N(Wi)
+            n_w_i_matrix = np.sum(temp_matrix, where=poet_matrix, axis=0)
+            # compute P(Ci|w) = N(Wi) / N(W)
+            p_c_i_w_matrix = n_w_i_matrix / n_w_matrix
+            p_c_i_w_matrix_save.append(p_c_i_w_matrix)
+            # compute P(Ci|w) * log(P(Ci|w)
+            p_c_i_w_matrix_log = np.where(p_c_i_w_matrix != 0, np.log2(p_c_i_w_matrix), 0)
+            p_c_i_w_matrix_entropy = np.multiply(p_c_i_w_matrix, p_c_i_w_matrix_log)
+
+            # compute N(~Wi)
+            n_w_i_not_matrix = self.label_occurances[label] - n_w_i_matrix
+            # compute P(Ci|~w) = N(~Wi) / N(~W)
+            p_c_i_w_not_matrix = n_w_i_not_matrix / n_w_not_matrix
+            # compute P(Ci|~w) * log(P(Ci|~w)
+
+            p_c_i_w_not_matrix_log = np.where(p_c_i_w_not_matrix != 0, np.log2(p_c_i_w_not_matrix), 0)
+            p_c_i_w_not_matrix_entropy = np.multiply(p_c_i_w_not_matrix, p_c_i_w_not_matrix_log)
+
+            sigma = sigma + np.multiply(p_w_matrix, p_c_i_w_matrix_entropy) + np.multiply(p_w_not_matrix,
+                                                                                          p_c_i_w_not_matrix_entropy)
+
+        sigma = sigma + self.compute_label_entropies(train_labels)
+        return sigma, np.array(p_c_i_w_matrix_save)
+
 
 sys.path.extend([os.getcwd()])
 path = os.getcwd()
 parent_dir = os.path.dirname(path)
 root_dir = os.path.dirname(parent_dir)
-print(root_dir)
 emotions_file = '{}/data/statistics/emotions.csv'.format(root_dir)
 polarity_file = '{}/data/statistics/polarity.csv'.format(root_dir)
 # Embedding('{}/data/manual_tag/statistics/clean_labeled_data.csv'.format(root_dir))
@@ -80,6 +187,13 @@ term_doc_train, term_doc_test, train_labels, test_labels = Embedding.tfidf_embed
                                                                                      0.1)
 final_train_labels = Embedding.multi_label_to_one_label(train_labels)
 final_test_labels = Embedding.multi_label_to_one_label(test_labels)
+
+doc_term_matrix, features = embedding_instance.doc_term(emotion_contents, emotion_labels, 0.1, n_gram=3)
+info_gain_matrix, p_c_i = embedding_instance.information_gain(doc_term_matrix, doc_term_matrix[:, 0])
+words_polarity_score, words, normalize_info_gain = embedding_instance.top_100_words(features, info_gain_matrix, p_c_i,
+                                                                                    'emotions')
+print(words_polarity_score)
+# %%
 Embedding.svm_model(term_doc_train, term_doc_test, final_train_labels, final_test_labels)
 
 polarity_contents, polarity_labels = embedding_instance.seperate_content_lables(polarity_file, 'Content',
@@ -90,3 +204,8 @@ term_doc_train, term_doc_test, train_labels, test_labels = Embedding.tfidf_embed
 final_train_labels = Embedding.multi_label_to_one_label(train_labels)
 final_test_labels = Embedding.multi_label_to_one_label(test_labels)
 Embedding.svm_model(term_doc_train, term_doc_test, final_train_labels, final_test_labels)
+doc_term_matrix, features = embedding_instance.doc_term(polarity_contents, polarity_labels, 0.1, n_gram=3)
+info_gain_matrix, p_c_i = embedding_instance.information_gain(doc_term_matrix, doc_term_matrix[:, 0])
+words_polarity_score, words, normalize_info_gain = embedding_instance.top_100_words(features, info_gain_matrix, p_c_i,
+                                                                                    'polarity')
+print(words_polarity_score)

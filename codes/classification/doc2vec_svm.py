@@ -44,13 +44,13 @@ def multi_label_to_one_label(labels):
 
 
 def svm_classification(data, labels, test_size, C_list, kernels_list, cls_weight):
-    print("you has been enterd in svm classifier")
+    print("you have been enterd in svm classifier")
     labels_1d_array = multi_label_to_one_label(labels)
     x_train, x_test, y_train, y_test = train_test_split(data, labels_1d_array, test_size=test_size)
     param_grid = {'C': C_list, 'kernel': kernels_list}
     clf = GridSearchCV(svm.SVC(class_weight=cls_weight, probability=True), param_grid)
     clf.fit(x_train, y_train)
-    print("best estimator: ", clf.best_estimator_)
+    print("best estimator: ", clf.best_estimator_, clf.best_score_, clf.best_params_)
     predicted_labels = clf.predict(x_test)
     probability = clf.predict_proba(x_test)
     score = clf.score(x_test, y_test)
@@ -75,22 +75,22 @@ if __name__ == '__main__':
     polarity_content = np.array(polarity_content.tolist())
     emotions_content = np.array(emotions_content.tolist())
 
-    # polarity_model = create_doc2vec_embeddings(polarity_content, '../../data/vectors/polarity_doc2vec.bin',
+    # polarity_model = create_doc2vec_embeddings(np.array(polarity_and_untagged.tolist()), '../../data/vectors/polarity_doc2vec.bin',
     #                                            vec_size=300, win=4, min_cnt=3, worker_threads=cores)
-    # emotions_model = create_doc2vec_embeddings(emotions_content, '../../data/vectors/emotions_doc2vec.bin',
+    # emotions_model = create_doc2vec_embeddings(np.array(emotions_and_untagged.tolist()), '../../data/vectors/emotions_doc2vec.bin',
     #                                            vec_size=300, win=4, min_cnt=3, worker_threads=cores)
 
     polarity_model = Doc2Vec.load("../../data/vectors/polarity_doc2vec.bin")
     emotions_model = Doc2Vec.load("../../data/vectors/emotions_doc2vec.bin")
 
-    polarity_vecs, polarity_and_untagged_vecs = convert_embedding2array(polarity_model, polarity_count)
-    emotions_vecs, emotions_and_untagged_vecs = convert_embedding2array(emotions_model, emotions_count)
-    # print(len(emotions_model.docvecs))
+    polarity_vecs, polarity_untagged_vecs = convert_embedding2array(polarity_model, polarity_count)
+    emotions_vecs, emotions_untagged_vecs = convert_embedding2array(emotions_model, emotions_count)
+    # print("len of polarity_and_untagged: ", len(polarity_untagged_vecs), len(polarity_vecs), len(polarity_and_untagged))
     # print(len(polarity_model.wv.vocab.items()))
-    # print(polarity_model.wv.most_similar('عالی'))
+    # print(polarity_model.wv.most_similar('کرونا'))
 
     # classify data using SVM
-    C = [10, 30, 50]
+    C = [30, 50, 100]
     kernel = ['rbf', 'linear']
     # classify polarity dataset
     polarity_clf = svm_classification(polarity_vecs, np.array(polarity_labels), test_size=0.1, C_list=C, kernels_list=kernel,

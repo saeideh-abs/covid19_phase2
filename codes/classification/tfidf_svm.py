@@ -188,14 +188,14 @@ term_doc_train, term_doc_test, train_labels, test_labels = Embedding.tfidf_embed
 final_train_labels = Embedding.multi_label_to_one_label(train_labels)
 final_test_labels = Embedding.multi_label_to_one_label(test_labels)
 
-doc_term_matrix, features = embedding_instance.doc_term(emotion_contents, emotion_labels, 0.1, n_gram=3)
-info_gain_matrix, p_c_i = embedding_instance.information_gain(doc_term_matrix, doc_term_matrix[:, 0])
-words_polarity_score, words, normalize_info_gain = embedding_instance.top_100_words(features, info_gain_matrix, p_c_i,
-                                                                                    'emotions')
-print(words_polarity_score)
+# doc_term_matrix, features = embedding_instance.doc_term(emotion_contents, emotion_labels, 0.1, n_gram=3)
+# info_gain_matrix, p_c_i = embedding_instance.information_gain(doc_term_matrix, doc_term_matrix[:, 0])
+# words_polarity_score, words, normalize_info_gain = embedding_instance.top_100_words(features, info_gain_matrix, p_c_i,
+#                                                                                     'emotions')
+# print(words_polarity_score)
 # %%
-Embedding.svm_model(term_doc_train, term_doc_test, final_train_labels, final_test_labels)
-
+# Embedding.svm_model(term_doc_train, term_doc_test, final_train_labels, final_test_labels)
+#
 polarity_contents, polarity_labels = embedding_instance.seperate_content_lables(polarity_file, 'Content',
                                                                                 embedding_instance.polarity)
 
@@ -204,6 +204,19 @@ term_doc_train, term_doc_test, train_labels, test_labels = Embedding.tfidf_embed
 final_train_labels = Embedding.multi_label_to_one_label(train_labels)
 final_test_labels = Embedding.multi_label_to_one_label(test_labels)
 Embedding.svm_model(term_doc_train, term_doc_test, final_train_labels, final_test_labels)
+# _________ extract features using info gain __________
+doc_term_matrix, features = embedding_instance.doc_term(polarity_contents, polarity_labels, 0.1, n_gram=1)
+info_gain_matrix, p_c_i = embedding_instance.information_gain(doc_term_matrix, doc_term_matrix[:, 0])
+words_polarity_score, words, normalize_info_gain = embedding_instance.top_100_words(features, info_gain_matrix, p_c_i,
+                                                                                    'polarity')
+print(words_polarity_score)
+
+doc_term_matrix, features = embedding_instance.doc_term(polarity_contents, polarity_labels, 0.1, n_gram=2)
+info_gain_matrix, p_c_i = embedding_instance.information_gain(doc_term_matrix, doc_term_matrix[:, 0])
+words_polarity_score, words, normalize_info_gain = embedding_instance.top_100_words(features, info_gain_matrix, p_c_i,
+                                                                                    'polarity')
+print(words_polarity_score)
+
 doc_term_matrix, features = embedding_instance.doc_term(polarity_contents, polarity_labels, 0.1, n_gram=3)
 info_gain_matrix, p_c_i = embedding_instance.information_gain(doc_term_matrix, doc_term_matrix[:, 0])
 words_polarity_score, words, normalize_info_gain = embedding_instance.top_100_words(features, info_gain_matrix, p_c_i,

@@ -87,7 +87,7 @@ if __name__ == '__main__':
     emotions_vecs, emotions_untagged_vecs = convert_embedding2array(emotions_model, emotions_count)
     # print("len of polarity_and_untagged: ", len(polarity_untagged_vecs), len(polarity_vecs), len(polarity_and_untagged))
     # print(len(polarity_model.wv.vocab.items()))
-    # print(polarity_model.wv.most_similar('عالی'))
+    # print(polarity_model.wv.most_similar('کرونا'))
 
     # classify data using SVM
     C = [30, 50, 100]

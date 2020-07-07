@@ -14,7 +14,7 @@ from sklearn.model_selection import GridSearchCV
 class Embedding():
 
     def __init__(self):
-        self.polarity = ['مثبت', 'منفی', 'خنثی']
+        self.polarity = ['مثبت', 'منفی', 'خنثی', 'پست عینی']
         self.emotional_tags = ['شادی', 'غم', 'ترس', 'تنفر', 'خشم', 'شگفتی', 'اعتماد', 'پیش‌بینی', 'سایر هیجانات',
                                'استرس']
 
@@ -80,7 +80,7 @@ parent_dir = os.path.dirname(path)
 root_dir = os.path.dirname(parent_dir)
 
 emotions_file = '{}/data/statistics/emotions_no_multi_label.csv'.format(root_dir)
-polarity_file = '{}/data/statistics/polarity_no_multi_label.csv'.format(root_dir)
+polarity_file = '{}/data/statistics/polarity_no_multi_label_plus_eini_label.csv'.format(root_dir)
 vocabs = pd.read_csv('../../data/vectors/IG_features_polarity.csv')['word']
 
 # Embedding('{}/data/manual_tag/statistics/clean_labeled_data.csv'.format(root_dir))

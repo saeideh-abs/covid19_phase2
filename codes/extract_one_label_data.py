@@ -57,6 +57,7 @@ if __name__ == '__main__':
     print("emotion_valid length:", len(emotion_valid))
 
     # read polarity data (include post eini label)
+    print("polarity data plus post eini label:")
     sentiment_labels = ['خنثی', 'منفی', 'مثبت', 'پست عینی']
     polarity = pd.read_csv("../data/manual_tag/clean_labeled_data.csv")
     print("original polarity:", len(polarity))
@@ -70,7 +71,7 @@ if __name__ == '__main__':
     polarity_train, polarity_test, polarity_valid = split_data(polarity_no_multi_label)
     polarity_train.to_csv("../data/statistics/polarity_no_multi_label_plus_eini_label_train.csv", index=False)
     polarity_test.to_csv("../data/statistics/polarity_no_multi_label_plus_eini_label_test.csv", index=False)
-    polarity_valid.to_csv("../data/statistics/polarity_no_multi_plus_eini_label_label_valid.csv", index=False)
+    polarity_valid.to_csv("../data/statistics/polarity_no_multi_plus_eini_label_valid.csv", index=False)
     print("polarity_train length:", len(polarity_train))
     print("polarity_test length:", len(polarity_test))
     print("polarity_valid length:", len(polarity_valid))

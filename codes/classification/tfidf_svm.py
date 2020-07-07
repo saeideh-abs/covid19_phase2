@@ -91,13 +91,15 @@ class Embedding():
         arg_max_p_c_i = np.argmax(p_c_i, axis=0)
         for arg in np.argsort(info_gain_matrix)[-100:][::-1]:
             words.append(features[arg])
-            extracted_features.append([features[arg], self.emotional_tags[arg_max_p_c_i[arg]],
-                np.round(info_gain_matrix[arg], decimals=5)])
             if tags_type == 'emotions':
+                extracted_features.append([features[arg], self.emotional_tags[arg_max_p_c_i[arg]],
+                    np.round(info_gain_matrix[arg], decimals=5)])
                 words_polarity_score.append(
                     {'کلمه': features[arg], 'قطبیت': self.emotional_tags[arg_max_p_c_i[arg]],
                      'امتیاز': np.round(info_gain_matrix[arg], decimals=5)})
             elif tags_type == 'polarity':
+                extracted_features.append([features[arg], self.emotional_tags[arg_max_p_c_i[arg]],
+                    np.round(info_gain_matrix[arg], decimals=5)])
                 words_polarity_score.append(
                     {'کلمه': features[arg], 'قطبیت': self.polarity[arg_max_p_c_i[arg]],
                      'امتیاز': np.round(info_gain_matrix[arg], decimals=5)})

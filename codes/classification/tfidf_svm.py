@@ -98,7 +98,7 @@ class Embedding():
                     {'کلمه': features[arg], 'قطبیت': self.emotional_tags[arg_max_p_c_i[arg]],
                      'امتیاز': np.round(info_gain_matrix[arg], decimals=5)})
             elif tags_type == 'polarity':
-                extracted_features.append([features[arg], self.emotional_tags[arg_max_p_c_i[arg]],
+                extracted_features.append([features[arg], self.polarity[arg_max_p_c_i[arg]],
                     np.round(info_gain_matrix[arg], decimals=5)])
                 words_polarity_score.append(
                     {'کلمه': features[arg], 'قطبیت': self.polarity[arg_max_p_c_i[arg]],
@@ -177,6 +177,17 @@ class Embedding():
         sigma = sigma + self.compute_label_entropies(train_labels)
         return sigma, np.array(p_c_i_w_matrix_save)
 
+    def create_features_dataframe(self, unigram, bigram, trigram):
+        unigram = np.array(unigram)
+        bigram = np.array(bigram)
+        trigram = np.array(trigram)
+
+        features = np.concatenate((unigram, bigram, trigram))
+        features_df = pd.DataFrame(features, columns=['word', 'polarity', 'score'])
+        features_df.to_csv('{}/data/vectors/IG_features.csv'.format(root_dir))
+        return features_df
+
+
 
 sys.path.extend([os.getcwd()])
 path = os.getcwd()
@@ -215,7 +226,6 @@ info_gain_matrix, p_c_i = embedding_instance.information_gain(doc_term_matrix, d
 words_polarity_score, words, normalize_info_gain, unigram_features = embedding_instance.top_100_words(features, info_gain_matrix, p_c_i,
     'polarity')
 print(unigram_features)
-print(words_polarity_score)
 
 doc_term_matrix, features = embedding_instance.doc_term(polarity_contents, polarity_labels, 0.1, n_gram=2)
 info_gain_matrix, p_c_i = embedding_instance.information_gain(doc_term_matrix, doc_term_matrix[:, 0])
@@ -228,3 +238,6 @@ info_gain_matrix, p_c_i = embedding_instance.information_gain(doc_term_matrix, d
 words_polarity_score, words, normalize_info_gain, trigram_features = embedding_instance.top_100_words(features, info_gain_matrix, p_c_i,
     'polarity')
 print(trigram_features)
+
+features_df = embedding_instance.create_features_dataframe(unigram_features, bigram_features, trigram_features)
+# print(features_df['polarity'])

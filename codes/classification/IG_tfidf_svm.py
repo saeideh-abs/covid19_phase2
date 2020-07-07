@@ -45,9 +45,10 @@ class Embedding():
     def svm_model(x_train, x_test, y_train, y_test, C_list, kernels_list, cls_weight):
         print("you have been enterd in svm classifier")
         param_grid = {'C': C_list, 'kernel': kernels_list}
-        clf = GridSearchCV(SVC(class_weight=cls_weight, probability=True), param_grid)
+        # clf = GridSearchCV(SVC(class_weight=cls_weight, probability=True), param_grid)
+        # print("best estimator: ", clf.best_estimator_, clf.best_score_, clf.best_params_)
+        clf = SVC(C=0.6, kernel='linear', probability=True)
         clf.fit(x_train, y_train)
-        print("best estimator: ", clf.best_estimator_, clf.best_score_, clf.best_params_)
         predicted_labels = clf.predict(x_test)
         probability = clf.predict_proba(x_test)
         score = clf.score(x_test, y_test)
@@ -100,7 +101,7 @@ term_doc_train, term_doc_test, train_labels, test_labels = Embedding.tfidf_embed
 final_train_labels = Embedding.multi_label_to_one_label(train_labels)
 final_test_labels = Embedding.multi_label_to_one_label(test_labels)
 # __________ classification part ___________
-C = [0.5, 1, 10]
+C = [0.6, 10]
 kernel = ['rbf', 'linear']
 
 Embedding.svm_model(term_doc_train, term_doc_test, final_train_labels, final_test_labels, C_list=C, kernels_list=kernel,

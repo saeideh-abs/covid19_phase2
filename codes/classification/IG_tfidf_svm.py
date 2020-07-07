@@ -6,9 +6,9 @@ import numpy as np
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.model_selection import train_test_split
 from hazm import Normalizer
+from sklearn.model_selection import KFold
 from sklearn.svm import SVC
 from sklearn.model_selection import GridSearchCV
-
 
 
 class Embedding():
@@ -19,12 +19,12 @@ class Embedding():
                                'استرس']
 
     @staticmethod
-    def tfidf_embedding(sentences_list, labels, test_size, vocab=None):
-        x_train, x_test, y_train, y_test = train_test_split(sentences_list, labels, test_size=test_size)
+    def tfidf_embedding(x_train, x_test, test_size, vocab=None):
+        # x_train, x_test, y_train, y_test = train_test_split(sentences_list, labels, test_size=test_size)
         tfidf = TfidfVectorizer(vocabulary=vocab)
         term_doc_train = tfidf.fit_transform(raw_documents=x_train)
         term_doc_test = tfidf.transform(raw_documents=x_test)
-        return term_doc_train, term_doc_test, y_train, y_test
+        return term_doc_train, term_doc_test
 
     @staticmethod
     def multi_label_to_one_label(labels):
@@ -44,10 +44,10 @@ class Embedding():
     @staticmethod
     def svm_model(x_train, x_test, y_train, y_test, C_list, kernels_list, cls_weight):
         print("you have been enterd in svm classifier")
-        param_grid = {'C': C_list, 'kernel': kernels_list}
+        # param_grid = {'C': C_list, 'kernel': kernels_list}
         # clf = GridSearchCV(SVC(class_weight=cls_weight, probability=True), param_grid)
         # print("best estimator: ", clf.best_estimator_, clf.best_score_, clf.best_params_)
-        clf = SVC(C=0.6, kernel='linear', probability=True)
+        clf = SVC(C=C_list[0], kernel=kernels_list[0], probability=True)
         clf.fit(x_train, y_train)
         predicted_labels = clf.predict(x_test)
         probability = clf.predict_proba(x_test)
@@ -88,7 +88,7 @@ vocabs = pd.read_csv('../../data/vectors/IG_features_polarity.csv')['word']
 embedding_instance = Embedding()
 # emotion_contents, emotion_labels = embedding_instance.seperate_content_lables(emotions_file, 'Content',
 #                                                                               embedding_instance.emotional_tags)
-# term_doc_train, term_doc_test, train_labels, test_labels = Embedding.tfidf_embedding(emotion_contents, emotion_labels,
+# term_doc_train, term_doc_test, train_labels, test_labels = Embedding().tfidf_embedding(emotion_contents, emotion_labels,
 #                                                                                      0.1)
 # final_train_labels = Embedding.multi_label_to_one_label(train_labels)
 # final_test_labels = Embedding.multi_label_to_one_label(test_labels)
@@ -96,13 +96,18 @@ embedding_instance = Embedding()
 
 polarity_contents, polarity_labels = embedding_instance.seperate_content_lables(polarity_file, 'Content',
                                                                                 embedding_instance.polarity)
-term_doc_train, term_doc_test, train_labels, test_labels = Embedding.tfidf_embedding(polarity_contents, polarity_labels,
-                                                                                     0.1)
-final_train_labels = Embedding.multi_label_to_one_label(train_labels)
-final_test_labels = Embedding.multi_label_to_one_label(test_labels)
-# __________ classification part ___________
-C = [0.6, 10]
-kernel = ['rbf', 'linear']
+# ____________ cross validation part ______________
+fold_numbers = 10
+kf = KFold(n_splits=fold_numbers, shuffle=False)
+for train_index, test_index in kf.split(polarity_contents):
+    x_train, x_test = polarity_contents[train_index], polarity_contents[test_index]
+    y_train, y_test = polarity_labels[train_index], polarity_labels[test_index]
 
-Embedding.svm_model(term_doc_train, term_doc_test, final_train_labels, final_test_labels, C_list=C, kernels_list=kernel,
-                    cls_weight='balanced')
+    term_doc_train, term_doc_test = Embedding().tfidf_embedding(x_train, x_test, 0.1)
+    final_train_labels = Embedding.multi_label_to_one_label(y_train)
+    final_test_labels = Embedding.multi_label_to_one_label(y_test)
+    # __________ classification part ___________
+    C = [1]
+    kernel = ['linear']
+    Embedding.svm_model(term_doc_train, term_doc_test, final_train_labels, final_test_labels, C_list=C, kernels_list=kernel,
+                        cls_weight='balanced')

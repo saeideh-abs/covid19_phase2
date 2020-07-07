@@ -47,10 +47,11 @@ def svm_classification(data, labels, test_size, C_list, kernels_list, cls_weight
     print("you have been enterd in svm classifier")
     labels_1d_array = multi_label_to_one_label(labels)
     x_train, x_test, y_train, y_test = train_test_split(data, labels_1d_array, test_size=test_size)
-    param_grid = {'C': C_list, 'kernel': kernels_list}
-    clf = GridSearchCV(svm.SVC(class_weight=cls_weight, probability=True), param_grid)
+    # param_grid = {'C': C_list, 'kernel': kernels_list}
+    # clf = GridSearchCV(svm.SVC(class_weight=cls_weight, probability=True), param_grid)
+    clf = svm.SVC(probability=True)
     clf.fit(x_train, y_train)
-    print("best estimator: ", clf.best_estimator_, clf.best_score_, clf.best_params_)
+    # print("best estimator: ", clf.best_estimator_, clf.best_score_, clf.best_params_)
     predicted_labels = clf.predict(x_test)
     probability = clf.predict_proba(x_test)
     score = clf.score(x_test, y_test)

@@ -53,7 +53,7 @@ class Embedding():
         probability = clf.predict_proba(x_test)
         score = clf.score(x_test, y_test)
         print(score)
-        return clf
+        return score
 
     def seperate_content_lables(self, filename, content, label_fields):
         df = pd.read_csv(filename)
@@ -92,6 +92,7 @@ embedding_instance = Embedding()
 polarity_contents, polarity_labels = embedding_instance.seperate_content_lables(polarity_file, 'Content',
                                                                                 embedding_instance.polarity)
 ### stop_words
+average_scores = 0
 # polarity_contents = Embedding.hazm_sentences_tokenize(polarity_contents)
 # ____________ cross validation part ______________
 fold_numbers = 10
@@ -106,10 +107,11 @@ for train_index, test_index in kf.split(polarity_contents):
     # __________ classification part ___________
     C = [1]
     kernel = ['linear']
-    Embedding.svm_model(term_doc_train, term_doc_test, final_train_labels, final_test_labels, C_list=C,
+    score = Embedding.svm_model(term_doc_train, term_doc_test, final_train_labels, final_test_labels, C_list=C,
                         kernels_list=kernel,
                         cls_weight='balanced')
-
+    average_scores += score
+print(average_scores / 10)
 
 # emotion section with vocabs
 emotions_content, emotions_labels = embedding_instance.seperate_content_lables(emotions_file, 'Content',

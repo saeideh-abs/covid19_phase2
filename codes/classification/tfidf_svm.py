@@ -198,7 +198,10 @@ polarity_file = '{}/data/statistics/polarity.csv'.format(root_dir)
 polarity_onelabel_file = '{}/data/statistics/polarity_no_multi_label.csv'.format(root_dir)
 embedding_instance = Embedding()
 
-emotion_contents, emotion_labels = embedding_instance.seperate_content_lables(emotions_file, 'Content',
+# one label info_gain
+# emotion_contents, emotion_labels = embedding_instance.seperate_content_lables(emotions_file, 'Content',
+#                                                                               embedding_instance.emotional_tags)
+emotion_contents, emotion_labels = embedding_instance.seperate_content_lables(emotions_onelabel_file, 'Content',
                                                                               embedding_instance.emotional_tags)
 term_doc_train, term_doc_test, train_labels, test_labels = Embedding.tfidf_embedding(emotion_contents, emotion_labels,
                                                                                      0.1)
@@ -238,7 +241,9 @@ features_df = embedding_instance.create_features_dataframe(unigram_features, big
 # %%
 Embedding.svm_model(term_doc_train, term_doc_test, final_train_labels, final_test_labels)
 
-polarity_contents, polarity_labels = embedding_instance.seperate_content_lables(polarity_file, 'Content',
+# polarity_contents, polarity_labels = embedding_instance.seperate_content_lables(polarity_file, 'Content',
+#                                                                                 embedding_instance.polarity)
+polarity_contents, polarity_labels = embedding_instance.seperate_content_lables(polarity_onelabel_file, 'Content',
                                                                                 embedding_instance.polarity)
 # _________ extract features using info gain __________
 doc_term_matrix, features = embedding_instance.doc_term(polarity_contents, polarity_labels, 0.1, n_gram=1)

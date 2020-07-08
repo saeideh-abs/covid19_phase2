@@ -86,15 +86,8 @@ emotions_vocabs = pd.read_csv('../../data/vectors/IG_features_emotion.csv')['wor
 # Embedding('{}/data/manual_tag/statistics/clean_labeled_data.csv'.format(root_dir))
 
 embedding_instance = Embedding()
-# emotion_contents, emotion_labels = embedding_instance.seperate_content_lables(emotions_file, 'Content',
-#                                                                               embedding_instance.emotional_tags)
-# term_doc_train, term_doc_test, train_labels, test_labels = Embedding().tfidf_embedding(emotion_contents, emotion_labels,
-#                                                                                      0.1)
-# final_train_labels = Embedding.multi_label_to_one_label(train_labels)
-# final_test_labels = Embedding.multi_label_to_one_label(test_labels)
-# Embedding.svm_model(term_doc_train, term_doc_test, final_train_labels, final_test_labels)
 
-## polarity_section
+# # polarity_section
 polarity_contents, polarity_labels = embedding_instance.seperate_content_lables(polarity_file, 'Content',
                                                                                 embedding_instance.polarity)
 # ____________ cross validation part ______________
@@ -114,12 +107,10 @@ for train_index, test_index in kf.split(polarity_contents):
                         kernels_list=kernel,
                         cls_weight='balanced')
 
-# emotion section with vocabs
 
+# emotion section with vocabs
 emotions_content, emotions_labels = embedding_instance.seperate_content_lables(emotions_file, 'Content',
                                                                                embedding_instance.emotional_tags)
-
-
 # ____________ cross validation part ______________
 fold_numbers = 10
 kf = KFold(n_splits=fold_numbers, shuffle=False)

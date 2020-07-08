@@ -5,7 +5,7 @@ import pandas as pd
 import numpy as np
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.model_selection import train_test_split
-from hazm import Normalizer
+from hazm import stopwords_list, Normalizer, word_tokenize
 from sklearn.model_selection import KFold
 from sklearn.svm import SVC
 from sklearn.model_selection import GridSearchCV
@@ -62,15 +62,16 @@ class Embedding():
         return content, labels
 
     @staticmethod
-    def hazm_sentences_tokenize(filename, field_name):
-        df = pd.read_csv(filename)
-        content = df.loc[:, field_name]
+    def hazm_sentences_tokenize(sentences):
         normalizer = Normalizer(persian_numbers=False)
         normalize_content = []
-
-        for elem in content:
-            normalize_content.append(normalizer.normalize(elem))
-        return content
+        hazm_stopwords = stopwords_list()
+        for elem in sentences:
+            normalize_sentence = normalizer.normalize(elem)
+            sentence_words = word_tokenize(normalize_sentence)
+            without_stop_words = [elem for elem in sentence_words if elem not in hazm_stopwords]
+            normalize_content.append(' '.join(without_stop_words))
+        return np.array(normalize_content)
 
 
 sys.path.extend([os.getcwd()])
@@ -90,6 +91,8 @@ embedding_instance = Embedding()
 # # polarity_section
 polarity_contents, polarity_labels = embedding_instance.seperate_content_lables(polarity_file, 'Content',
                                                                                 embedding_instance.polarity)
+### stop_words
+# polarity_contents = Embedding.hazm_sentences_tokenize(polarity_contents)
 # ____________ cross validation part ______________
 fold_numbers = 10
 kf = KFold(n_splits=fold_numbers, shuffle=False)

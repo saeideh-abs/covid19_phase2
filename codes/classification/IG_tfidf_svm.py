@@ -5,7 +5,7 @@ import pandas as pd
 import numpy as np
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.model_selection import train_test_split
-from hazm import Normalizer
+from hazm import stopwords_list, Normalizer, word_tokenize
 from sklearn.model_selection import KFold
 from sklearn.svm import SVC
 from sklearn.model_selection import GridSearchCV
@@ -53,8 +53,7 @@ class Embedding():
         probability = clf.predict_proba(x_test)
         score = clf.score(x_test, y_test)
         print(score)
-        return clf
-
+        return score
 
     def seperate_content_lables(self, filename, content, label_fields):
         df = pd.read_csv(filename)
@@ -63,15 +62,16 @@ class Embedding():
         return content, labels
 
     @staticmethod
-    def hazm_sentences_tokenize(filename, field_name):
-        df = pd.read_csv(filename)
-        content = df.loc[:, field_name]
+    def hazm_sentences_tokenize(sentences):
         normalizer = Normalizer(persian_numbers=False)
         normalize_content = []
-
-        for elem in content:
-            normalize_content.append(normalizer.normalize(elem))
-        return content
+        hazm_stopwords = stopwords_list()
+        for elem in sentences:
+            normalize_sentence = normalizer.normalize(elem)
+            sentence_words = word_tokenize(normalize_sentence)
+            without_stop_words = [elem for elem in sentence_words if elem not in hazm_stopwords]
+            normalize_content.append(' '.join(without_stop_words))
+        return np.array(normalize_content)
 
 
 sys.path.extend([os.getcwd()])
@@ -81,21 +81,19 @@ root_dir = os.path.dirname(parent_dir)
 
 emotions_file = '{}/data/statistics/emotions_no_multi_label.csv'.format(root_dir)
 polarity_file = '{}/data/statistics/polarity_no_multi_label_plus_eini_label.csv'.format(root_dir)
-vocabs = pd.read_csv('../../data/vectors/IG_features_polarity.csv')['word']
 
+polarity_vocabs = pd.read_csv('../../data/vectors/IG_features_polarity.csv')['word']
+emotions_vocabs = pd.read_csv('../../data/vectors/IG_features_emotion.csv')['word']
 # Embedding('{}/data/manual_tag/statistics/clean_labeled_data.csv'.format(root_dir))
 
 embedding_instance = Embedding()
-# emotion_contents, emotion_labels = embedding_instance.seperate_content_lables(emotions_file, 'Content',
-#                                                                               embedding_instance.emotional_tags)
-# term_doc_train, term_doc_test, train_labels, test_labels = Embedding().tfidf_embedding(emotion_contents, emotion_labels,
-#                                                                                      0.1)
-# final_train_labels = Embedding.multi_label_to_one_label(train_labels)
-# final_test_labels = Embedding.multi_label_to_one_label(test_labels)
-# Embedding.svm_model(term_doc_train, term_doc_test, final_train_labels, final_test_labels)
 
+# # polarity_section
 polarity_contents, polarity_labels = embedding_instance.seperate_content_lables(polarity_file, 'Content',
                                                                                 embedding_instance.polarity)
+### stop_words
+average_scores = 0
+# polarity_contents = Embedding.hazm_sentences_tokenize(polarity_contents)
 # ____________ cross validation part ______________
 fold_numbers = 10
 kf = KFold(n_splits=fold_numbers, shuffle=False)
@@ -109,5 +107,27 @@ for train_index, test_index in kf.split(polarity_contents):
     # __________ classification part ___________
     C = [1]
     kernel = ['linear']
-    Embedding.svm_model(term_doc_train, term_doc_test, final_train_labels, final_test_labels, C_list=C, kernels_list=kernel,
+    score = Embedding.svm_model(term_doc_train, term_doc_test, final_train_labels, final_test_labels, C_list=C,
+                        kernels_list=kernel,
+                        cls_weight='balanced')
+    average_scores += score
+print(average_scores / 10)
+
+# emotion section with vocabs
+emotions_content, emotions_labels = embedding_instance.seperate_content_lables(emotions_file, 'Content',
+                                                                               embedding_instance.emotional_tags)
+# ____________ cross validation part ______________
+fold_numbers = 10
+kf = KFold(n_splits=fold_numbers, shuffle=False)
+for train_index, test_index in kf.split(emotions_content):
+    x_train, x_test = emotions_content[train_index], emotions_content[test_index]
+    y_train, y_test = emotions_labels[train_index], emotions_labels[test_index]
+    term_doc_train, term_doc_test = Embedding().tfidf_embedding(x_train, x_test, 0.1, vocab=emotions_vocabs)
+    final_train_labels = Embedding.multi_label_to_one_label(y_train)
+    final_test_labels = Embedding.multi_label_to_one_label(y_test)
+    # __________ classification part ___________
+    C = [1]
+    kernel = ['linear']
+    Embedding.svm_model(term_doc_train, term_doc_test, final_train_labels, final_test_labels, C_list=C,
+                        kernels_list=kernel,
                         cls_weight='balanced')

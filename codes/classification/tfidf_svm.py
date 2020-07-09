@@ -8,6 +8,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer, CountVectorizer
 from sklearn.model_selection import train_test_split
 from sklearn.svm import SVC
 from hazm import Normalizer
+from hazm import stopwords_list, word_tokenize
 
 
 class Embedding():
@@ -56,15 +57,16 @@ class Embedding():
         return content, labels
 
     @staticmethod
-    def hazm_sentences_tokenize(filename, field_name):
-        df = pd.read_csv(filename)
-        content = df.loc[:, field_name]
+    def hazm_sentences_tokenize(sentences):
         normalizer = Normalizer(persian_numbers=False)
         normalize_content = []
-
-        for elem in content:
-            normalize_content.append(normalizer.normalize(elem))
-        return content
+        hazm_stopwords = stopwords_list()
+        for elem in sentences:
+            normalize_sentence = normalizer.normalize(elem)
+            sentence_words = word_tokenize(normalize_sentence)
+            without_stop_words = [elem for elem in sentence_words if elem not in hazm_stopwords]
+            normalize_content.append(' '.join(without_stop_words))
+        return normalize_content
 
     @staticmethod
     def compute_label_sets_occurances(train_labels):
@@ -198,8 +200,13 @@ polarity_file = '{}/data/statistics/polarity.csv'.format(root_dir)
 polarity_onelabel_file = '{}/data/statistics/polarity_no_multi_label.csv'.format(root_dir)
 embedding_instance = Embedding()
 
-emotion_contents, emotion_labels = embedding_instance.seperate_content_lables(emotions_file, 'Content',
+# one label info_gain
+# emotion_contents, emotion_labels = embedding_instance.seperate_content_lables(emotions_file, 'Content',
+#                                                                               embedding_instance.emotional_tags)
+emotion_contents, emotion_labels = embedding_instance.seperate_content_lables(emotions_onelabel_file, 'Content',
                                                                               embedding_instance.emotional_tags)
+### this is for normalize and remove stopwords
+# emotion_contents = Embedding.hazm_sentences_tokenize(emotion_contents)
 term_doc_train, term_doc_test, train_labels, test_labels = Embedding.tfidf_embedding(emotion_contents, emotion_labels,
                                                                                      0.1)
 final_train_labels = Embedding.multi_label_to_one_label(train_labels)
@@ -238,8 +245,12 @@ features_df = embedding_instance.create_features_dataframe(unigram_features, big
 # %%
 Embedding.svm_model(term_doc_train, term_doc_test, final_train_labels, final_test_labels)
 
-polarity_contents, polarity_labels = embedding_instance.seperate_content_lables(polarity_file, 'Content',
+# polarity_contents, polarity_labels = embedding_instance.seperate_content_lables(polarity_file, 'Content',
+#                                                                                 embedding_instance.polarity)
+polarity_contents, polarity_labels = embedding_instance.seperate_content_lables(polarity_onelabel_file, 'Content',
                                                                                 embedding_instance.polarity)
+### this is for normalize and remove stopwords
+# polarity_contents = Embedding.hazm_sentences_tokenize(polarity_contents)
 # _________ extract features using info gain __________
 doc_term_matrix, features = embedding_instance.doc_term(polarity_contents, polarity_labels, 0.1, n_gram=1)
 info_gain_matrix, p_c_i = embedding_instance.information_gain(doc_term_matrix, doc_term_matrix[:, 0])

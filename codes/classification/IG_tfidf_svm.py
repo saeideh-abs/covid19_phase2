@@ -108,8 +108,8 @@ for train_index, test_index in kf.split(polarity_contents):
     C = [1]
     kernel = ['linear']
     score = Embedding.svm_model(term_doc_train, term_doc_test, final_train_labels, final_test_labels, C_list=C,
-                        kernels_list=kernel,
-                        cls_weight='balanced')
+                                kernels_list=kernel,
+                                cls_weight='balanced')
     average_scores += score
 print(average_scores / 10)
 
@@ -119,6 +119,7 @@ emotions_content, emotions_labels = embedding_instance.seperate_content_lables(e
 # ____________ cross validation part ______________
 fold_numbers = 10
 kf = KFold(n_splits=fold_numbers, shuffle=False)
+average_scores_emotions = 0
 for train_index, test_index in kf.split(emotions_content):
     x_train, x_test = emotions_content[train_index], emotions_content[test_index]
     y_train, y_test = emotions_labels[train_index], emotions_labels[test_index]
@@ -128,6 +129,8 @@ for train_index, test_index in kf.split(emotions_content):
     # __________ classification part ___________
     C = [1]
     kernel = ['linear']
-    Embedding.svm_model(term_doc_train, term_doc_test, final_train_labels, final_test_labels, C_list=C,
-                        kernels_list=kernel,
-                        cls_weight='balanced')
+    score = Embedding.svm_model(term_doc_train, term_doc_test, final_train_labels, final_test_labels, C_list=C,
+                                kernels_list=kernel,
+                                cls_weight='balanced')
+    average_scores_emotions += score
+print(average_scores_emotions / 10)

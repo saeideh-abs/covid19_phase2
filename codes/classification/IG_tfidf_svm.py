@@ -84,7 +84,6 @@ polarity_file = '{}/data/statistics/polarity_no_multi_label_plus_eini_label.csv'
 
 polarity_vocabs = pd.read_csv('../../data/vectors/IG_features_polarity.csv')['word']
 emotions_vocabs = pd.read_csv('../../data/vectors/IG_features_emotion.csv')['word']
-print(emotions_vocabs)
 # Embedding('{}/data/manual_tag/statistics/clean_labeled_data.csv'.format(root_dir))
 
 embedding_instance = Embedding()
@@ -102,7 +101,7 @@ for train_index, test_index in kf.split(polarity_contents):
     x_train, x_test = polarity_contents[train_index], polarity_contents[test_index]
     y_train, y_test = polarity_labels[train_index], polarity_labels[test_index]
 
-    term_doc_train, term_doc_test = Embedding().tfidf_embedding(x_train, x_test, 0.1, vocab=emotions_vocabs)
+    term_doc_train, term_doc_test = Embedding().tfidf_embedding(x_train, x_test, 0.1, vocab=polarity_vocabs)
     final_train_labels = Embedding.multi_label_to_one_label(y_train)
     final_test_labels = Embedding.multi_label_to_one_label(y_test)
     # __________ classification part ___________

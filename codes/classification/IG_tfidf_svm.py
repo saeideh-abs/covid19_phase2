@@ -93,7 +93,7 @@ polarity_contents, polarity_labels = embedding_instance.seperate_content_lables(
                                                                                 embedding_instance.polarity)
 ### stop_words
 average_scores = 0
-# polarity_contents = Embedding.hazm_sentences_tokenize(polarity_contents)
+polarity_contents = Embedding.hazm_sentences_tokenize(polarity_contents)
 # ____________ cross validation part ______________
 fold_numbers = 10
 kf = KFold(n_splits=fold_numbers, shuffle=False)
@@ -101,15 +101,15 @@ for train_index, test_index in kf.split(polarity_contents):
     x_train, x_test = polarity_contents[train_index], polarity_contents[test_index]
     y_train, y_test = polarity_labels[train_index], polarity_labels[test_index]
 
-    term_doc_train, term_doc_test = Embedding().tfidf_embedding(x_train, x_test, 0.1)
+    term_doc_train, term_doc_test = Embedding().tfidf_embedding(x_train, x_test, 0.1, vocab=polarity_vocabs)
     final_train_labels = Embedding.multi_label_to_one_label(y_train)
     final_test_labels = Embedding.multi_label_to_one_label(y_test)
     # __________ classification part ___________
     C = [1]
     kernel = ['linear']
     score = Embedding.svm_model(term_doc_train, term_doc_test, final_train_labels, final_test_labels, C_list=C,
-                        kernels_list=kernel,
-                        cls_weight='balanced')
+                                kernels_list=kernel,
+                                cls_weight='balanced')
     average_scores += score
 print(average_scores / 10)
 
@@ -119,6 +119,7 @@ emotions_content, emotions_labels = embedding_instance.seperate_content_lables(e
 # ____________ cross validation part ______________
 fold_numbers = 10
 kf = KFold(n_splits=fold_numbers, shuffle=False)
+average_scores_emotions = 0
 for train_index, test_index in kf.split(emotions_content):
     x_train, x_test = emotions_content[train_index], emotions_content[test_index]
     y_train, y_test = emotions_labels[train_index], emotions_labels[test_index]
@@ -128,6 +129,8 @@ for train_index, test_index in kf.split(emotions_content):
     # __________ classification part ___________
     C = [1]
     kernel = ['linear']
-    Embedding.svm_model(term_doc_train, term_doc_test, final_train_labels, final_test_labels, C_list=C,
-                        kernels_list=kernel,
-                        cls_weight='balanced')
+    score = Embedding.svm_model(term_doc_train, term_doc_test, final_train_labels, final_test_labels, C_list=C,
+                                kernels_list=kernel,
+                                cls_weight='balanced')
+    average_scores_emotions += score
+print(average_scores_emotions / 10)

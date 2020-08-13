@@ -214,7 +214,7 @@ root_dir = os.path.dirname(parent_dir)
 emotions_file = '{}/data/statistics/emotions.csv'.format(root_dir)
 emotions_onelabel_file = '{}/data/statistics/emotions_no_multi_label.csv'.format(root_dir)
 polarity_file = '{}/data/statistics/polarity.csv'.format(root_dir)
-polarity_onelabel_file = '{}/data/statistics/polarity_no_multi_label.csv'.format(root_dir)
+polarity_one_label_file = '{}/data/statistics/polarity_no_multi_label.csv'.format(root_dir)
 embedding_instance = Embedding()
 # %%
 # one label info_gain
@@ -233,25 +233,25 @@ final_test_labels = Embedding.multi_label_to_one_label(test_labels)
 doc_term_matrix, features = embedding_instance.doc_term(emotion_contents, emotion_labels, 0.1, n_gram=1)
 info_gain_matrix, p_c_i = embedding_instance.information_gain(doc_term_matrix, doc_term_matrix[:, 0])
 emotions_polarity_score, words, normalize_info_gain, unigram_features = embedding_instance.top_words(features,
-                                                                                                      info_gain_matrix,
-                                                                                                      p_c_i,
-                                                                                                      'emotions', 50)
+                                                                                                     info_gain_matrix,
+                                                                                                     p_c_i,
+                                                                                                     'emotions', 50)
 print(unigram_features)
 # %%
 doc_term_matrix, features = embedding_instance.doc_term(emotion_contents, emotion_labels, 0.1, n_gram=2)
 info_gain_matrix, p_c_i = embedding_instance.information_gain(doc_term_matrix, doc_term_matrix[:, 0])
 emotions_polarity_score, words, normalize_info_gain, bigram_features = embedding_instance.top_words(features,
-                                                                                                     info_gain_matrix,
-                                                                                                     p_c_i,
-                                                                                                     'emotions', 50)
+                                                                                                    info_gain_matrix,
+                                                                                                    p_c_i,
+                                                                                                    'emotions', 50)
 print(bigram_features)
 
 doc_term_matrix, features = embedding_instance.doc_term(emotion_contents, emotion_labels, 0.1, n_gram=3)
 info_gain_matrix, p_c_i = embedding_instance.information_gain(doc_term_matrix, doc_term_matrix[:, 0])
 emotions_polarity_score, words, normalize_info_gain, trigram_features = embedding_instance.top_words(features,
-                                                                                                      info_gain_matrix,
-                                                                                                      p_c_i,
-                                                                                                      'emotions', 50)
+                                                                                                     info_gain_matrix,
+                                                                                                     p_c_i,
+                                                                                                     'emotions', 50)
 print(trigram_features)
 
 features_df = embedding_instance.create_features_dataframe(unigram_features, bigram_features, trigram_features,
@@ -265,7 +265,8 @@ Embedding.svm_model(term_doc_train, term_doc_test, final_train_labels, final_tes
 # polarity_contents, polarity_labels = embedding_instance.seperate_content_lables(polarity_file, 'Content',
 #                                                                                 embedding_instance.polarity)
 # %%
-polarity_contents, polarity_labels = embedding_instance.seperate_content_lables(polarity_onelabel_file, 'Content',
+polarity_contents, polarity_labels = embedding_instance.seperate_content_lables(polarity_one_label_file,
+                                                                                'Content',
                                                                                 embedding_instance.polarity)
 ### this is for normalize and remove stopwords
 polarity_contents = Embedding.hazm_sentences_tokenize(polarity_contents)
@@ -274,25 +275,25 @@ polarity_contents = Embedding.hazm_sentences_tokenize(polarity_contents)
 doc_term_matrix, features = embedding_instance.doc_term(polarity_contents, polarity_labels, 0.1, n_gram=1)
 info_gain_matrix, p_c_i = embedding_instance.information_gain(doc_term_matrix, doc_term_matrix[:, 0])
 words_polarity_score, words, normalize_info_gain, unigram_features = embedding_instance.top_words(features,
-                                                                                                      info_gain_matrix,
-                                                                                                      p_c_i,
-                                                                                                      'polarity')
+                                                                                                  info_gain_matrix,
+                                                                                                  p_c_i,
+                                                                                                  'polarity')
 print(unigram_features)
 
 doc_term_matrix, features = embedding_instance.doc_term(polarity_contents, polarity_labels, 0.1, n_gram=2)
 info_gain_matrix, p_c_i = embedding_instance.information_gain(doc_term_matrix, doc_term_matrix[:, 0])
 words_polarity_score, words, normalize_info_gain, bigram_features = embedding_instance.top_words(features,
-                                                                                                     info_gain_matrix,
-                                                                                                     p_c_i,
-                                                                                                     'polarity')
+                                                                                                 info_gain_matrix,
+                                                                                                 p_c_i,
+                                                                                                 'polarity')
 print(bigram_features)
 
 doc_term_matrix, features = embedding_instance.doc_term(polarity_contents, polarity_labels, 0.1, n_gram=3)
 info_gain_matrix, p_c_i = embedding_instance.information_gain(doc_term_matrix, doc_term_matrix[:, 0])
 words_polarity_score, words, normalize_info_gain, trigram_features = embedding_instance.top_words(features,
-                                                                                                      info_gain_matrix,
-                                                                                                      p_c_i,
-                                                                                                      'polarity')
+                                                                                                  info_gain_matrix,
+                                                                                                  p_c_i,
+                                                                                                  'polarity')
 print(trigram_features)
 
 features_df = embedding_instance.create_features_dataframe(unigram_features, bigram_features, trigram_features,

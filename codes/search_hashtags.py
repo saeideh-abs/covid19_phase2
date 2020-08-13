@@ -72,11 +72,11 @@ def ret_posts_based_on_hashtags(data_folder_path, hashtags_file_path, labeled_da
 
 if __name__ == '__main__':
     # data files path
-    hashtags_file_path = "../resources/hashtags.txt"
+    hashtags_file_path = "../resources/politics_hashtag.txt"
     data_folder_path = "../data/pre_process_1"
     labeled_data_path = "../data/manual_tag/Labeled-Data-v1.csv"
 
     retrieved_data_ids = ret_posts_based_on_hashtags(data_folder_path, hashtags_file_path, labeled_data_path)
     ret = pd.DataFrame(retrieved_data_ids,
                        columns=['postId', 'net_type', 'textField_nlp_normal'])
-    ret.to_csv("../data/social_distance.csv", index=False)
+    ret.to_csv("../data/politics.csv", index=False)

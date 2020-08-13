@@ -14,7 +14,7 @@ from hazm import stopwords_list, word_tokenize
 class Embedding():
 
     def __init__(self):
-        self.polarity = {0: 'مثبت', 1: 'منفی', 2: 'خنثی'}
+        self.polarity = {0: 'مثبت', 1: 'منفی', 2: 'خنثی', 3: 'پست عینی'}
         self.emotional_tags = {0: 'شادی', 1: 'غم', 2: 'ترس', 3: 'تنفر', 4: 'خشم', 5: 'شگفتی', 6: 'اعتماد',
                                7: 'پیش‌بینی', 8: 'سایر هیجانات', 9: 'استرس'}
 

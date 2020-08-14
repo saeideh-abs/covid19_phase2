@@ -9,6 +9,7 @@ from hazm import stopwords_list, Normalizer, word_tokenize
 from sklearn.model_selection import KFold, GridSearchCV
 from sklearn.metrics import accuracy_score
 from sklearn.svm import SVC
+from gensim.models import Word2Vec
 
 
 class Embedding():
@@ -17,6 +18,37 @@ class Embedding():
         self.polarity = ['مثبت', 'منفی', 'خنثی', 'پست عینی']
         self.emotional_tags = ['شادی', 'غم', 'ترس', 'تنفر', 'خشم', 'شگفتی', 'اعتماد', 'پیش‌بینی', 'سایر هیجانات',
                                'استرس']
+
+    def word_2vec(self, input_docs, size=300, window=5, min_count=1, workers=8, sg=1):
+        model = Word2Vec(input_docs, size=size, window=window, min_count=min_count, workers=workers, sg=sg)
+        return model
+
+    def word2vec_mean_representation_sentences(self, model, input_doc):
+        word_vector_size = model.wv.vector_size
+        doc_size = len(input_doc)
+        vocabs = model.wv.vocab
+        doc_mean_matrix = np.zeros((doc_size, word_vector_size))
+
+        for doc_index, doc in enumerate(input_doc):
+            for word in doc:
+                if word in vocabs:
+                    doc_mean_matrix[doc_index, :] += model.wv[word]
+            doc_mean_matrix[doc_index, :] = np.divide(doc_mean_matrix[doc_index, :], len(doc))
+
+        return doc_mean_matrix
+
+    def test_word2vec(self, polarity_contents, polarity_labels):
+        polarity_contents = Embedding.hazm_sentences_tokenize(polarity_contents, joined=False,numpy_array=False)
+        word2vec_model = self.word_2vec(polarity_contents)
+        print('number of words : {}'.format(len(word2vec_model.wv.vocab)))
+        term_doc_train = self.word2vec_mean_representation_sentences(word2vec_model, polarity_contents)
+        final_train_labels = Embedding.multi_label_to_one_label(polarity_labels)
+        C = [1]
+        kernel = ['linear']
+        predict_labels = Embedding.svm_model_train(term_doc_train, final_train_labels, C_list=C, kernels_list=kernel)
+        accuracy = np.where(predict_labels == final_train_labels)[0].shape[0] / predict_labels.shape[0]
+        print('model accurcay: {}'.format(accuracy))
+        return
 
     @staticmethod
     def tfidf_embedding(x_train, x_test, test_size, vocab=None):
@@ -71,7 +103,7 @@ class Embedding():
         result = np.concatenate((np.array(post_ids).reshape(-1, 1),
                                  np.array(all_pred).reshape(-1, 1),
                                  np.array(one_labels).reshape(-1, 1)),
-                                 axis=1)
+                                axis=1)
         result_df = pd.DataFrame(result, columns=['Post Id', 'predicted', 'real'])
         os.makedirs('{}/data/result/'.format(root_dir), exist_ok=True)
         with open('{}/data/result/svm_common_dataset_result.csv'.format(root_dir), 'w') as result_file:
@@ -114,6 +146,27 @@ class Embedding():
         print(score)
         return score
 
+    def svm_all(self, polarity_ids, polarity_contents):
+        polarity_ids = polarity_ids.to_numpy()
+        polarity_contents = Embedding.hazm_sentences_tokenize(polarity_contents)
+        term_doc_train = self.tfidf_embedding_train(polarity_contents, vocab=polarity_vocabs)
+        final_train_labels = Embedding.multi_label_to_one_label(polarity_labels)
+
+        C = [1]
+        kernel = ['linear']
+        predict_labels = Embedding.svm_model_train(term_doc_train, final_train_labels, C_list=C, kernels_list=kernel)
+        accuracy = np.where(predict_labels == final_train_labels)[0].shape[0] / predict_labels.shape[0]
+        print('model accurcay: {}'.format(accuracy))
+
+        final_train_labels = final_train_labels.reshape((final_train_labels.shape[0], 1))
+        predict_labels = predict_labels.reshape((predict_labels.shape[0], 1))
+        polarity_ids_reshaped = polarity_ids.reshape((polarity_ids.shape[0], 1))
+        result = np.concatenate((polarity_ids_reshaped, predict_labels, final_train_labels), axis=1)
+        result_df = pd.DataFrame(result, columns=['Post Id', 'predicted', 'real'])
+        os.makedirs('{}/data/result/'.format(root_dir), exist_ok=True)
+        with open('{}/data/result/svm_result.csv'.format(root_dir), 'w') as result_file:
+            result_df.to_csv(result_file)
+
     def seperate_content_lables(self, filename, post_id, content, label_fields):
         df = pd.read_csv(filename)
         post_id = df.loc[:, post_id]
@@ -122,7 +175,7 @@ class Embedding():
         return post_id, content, labels
 
     @staticmethod
-    def hazm_sentences_tokenize(sentences):
+    def hazm_sentences_tokenize(sentences, joined=True, numpy_array=True):
         normalizer = Normalizer(persian_numbers=False)
         normalize_content = []
         hazm_stopwords = stopwords_list()
@@ -130,8 +183,14 @@ class Embedding():
             normalize_sentence = normalizer.normalize(elem)
             sentence_words = word_tokenize(normalize_sentence)
             without_stop_words = [elem for elem in sentence_words if elem not in hazm_stopwords]
-            normalize_content.append(' '.join(without_stop_words))
-        return np.array(normalize_content)
+            if joined:
+                normalize_content.append(' '.join(without_stop_words))
+            else:
+                normalize_content.append(without_stop_words)
+        if numpy_array:
+            return np.array(normalize_content)
+        else:
+            return normalize_content
 
 
 sys.path.extend([os.getcwd()])
@@ -151,32 +210,16 @@ embedding_instance = Embedding()
 # calculate accuracy on common train test data with maryam
 embedding_instance.svm_with_common_data(polarity_vocabs)
 
-
 # # polarity_section
-polarity_ids, polarity_contents, polarity_labels = embedding_instance.seperate_content_lables(polarity_file, 'Post Id',
-                                                                                              'Content',
-                                                                                              embedding_instance.polarity)
-### stop_words
-polarity_ids = polarity_ids.to_numpy()
-polarity_contents = Embedding.hazm_sentences_tokenize(polarity_contents)
-term_doc_train = Embedding().tfidf_embedding_train(polarity_contents, vocab=polarity_vocabs)
-final_train_labels = Embedding.multi_label_to_one_label(polarity_labels)
+polarity_ids, \
+polarity_contents, \
+polarity_labels = embedding_instance.seperate_content_lables(polarity_file,
+                                                             'Post Id',
+                                                             'Content',
+                                                             embedding_instance.polarity)
+embedding_instance.test_word2vec(polarity_contents, polarity_labels)
+# embedding_instance.svm_all(polarity_ids, polarity_contents)
 
-C = [1]
-kernel = ['linear']
-predict_labels = Embedding.svm_model_train(term_doc_train, final_train_labels, C_list=C, kernels_list=kernel)
-accuracy = np.where(predict_labels == final_train_labels)[0].shape[0] / predict_labels.shape[0]
-print('model accurcay: {}'.format(accuracy))
-
-final_train_labels = final_train_labels.reshape((final_train_labels.shape[0], 1))
-predict_labels = predict_labels.reshape((predict_labels.shape[0], 1))
-polarity_ids_reshaped = polarity_ids.reshape((polarity_ids.shape[0], 1))
-polarity_contents_reshaped = polarity_contents.reshape((polarity_contents.shape[0], 1))
-result = np.concatenate((polarity_ids_reshaped, predict_labels, final_train_labels), axis=1)
-result_df = pd.DataFrame(result, columns=['Post Id', 'predicted', 'real'])
-os.makedirs('{}/data/result/'.format(root_dir), exist_ok=True)
-with open('{}/data/result/svm_result.csv'.format(root_dir), 'w') as result_file:
-    result_df.to_csv(result_file)
 
 # ____________ cross validation part ______________
 average_scores = 0

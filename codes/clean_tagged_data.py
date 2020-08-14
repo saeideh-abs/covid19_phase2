@@ -14,6 +14,7 @@ def search_column_by_value(data, column_name, value):
 
 def text_cleaner(docs):
     normalizer = Normalizer(persian_numbers=False)
+    stemmer = Stemmer()
     lemmatizer = Lemmatizer()
     final_text = []
 
@@ -21,6 +22,7 @@ def text_cleaner(docs):
         normal_text = normalizer.normalize(doc)
         doc_words = word_tokenize(normal_text)
         without_stop_words = [word for word in doc_words if word not in stop_words]
+        # stem = [stemmer.stem(word) for word in without_stop_words]
         lemm = [lemmatizer.lemmatize(word).split('#')[0] for word in without_stop_words] # get the past part of the lemm
         final_text.append(' '.join(lemm))
     return np.array(final_text)

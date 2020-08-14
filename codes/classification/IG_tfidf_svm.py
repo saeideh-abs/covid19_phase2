@@ -78,7 +78,6 @@ class Embedding():
         contents = train_valid_test['Content']
         contents = self.hazm_sentences_tokenize(contents)
         labels = train_valid_test[self.polarity].to_numpy()
-        post_ids = train_valid_test['Post Id']
 
         term_doc = self.tfidf_embedding_train(contents, vocab=vocabs)
         one_labels = Embedding.multi_label_to_one_label(labels)
@@ -87,6 +86,8 @@ class Embedding():
         X_test = term_doc[train_valid_size:]
         y_train = one_labels[:train_valid_size]
         y_test = one_labels[train_valid_size:]
+        post_ids = train_valid['Post Id']
+        test_post_ids = test['Post Id']
 
         c = 1
         kernel = 'linear'
@@ -96,18 +97,30 @@ class Embedding():
         acc = accuracy_score(y_test, y_pred)
         print("accuracy on test data", acc)
 
-        all_pred = clf.predict(term_doc)
-        all_acc = accuracy_score(one_labels, all_pred)
-        print("accuracy on all data (train and test)", all_acc)
+        x_train_pred = clf.predict(X_train)
+        x_train_acc = accuracy_score(y_train, x_train_pred)
+        print("accuracy on train data", x_train_acc)
 
         result = np.concatenate((np.array(post_ids).reshape(-1, 1),
-                                 np.array(all_pred).reshape(-1, 1),
-                                 np.array(one_labels).reshape(-1, 1)),
+                                 np.array(x_train_pred).reshape(-1, 1),
+                                 np.array(y_train).reshape(-1, 1)),
                                 axis=1)
+
+        test_result = np.concatenate((np.array(test_post_ids).reshape(-1, 1),
+                                 np.array(y_pred).reshape(-1, 1),
+                                 np.array(y_test).reshape(-1, 1)),
+                                axis=1)
+
         result_df = pd.DataFrame(result, columns=['Post Id', 'predicted', 'real'])
+        test_result_df = pd.DataFrame(test_result, columns=['Post Id', 'predicted', 'real'])
+
         os.makedirs('{}/data/result/'.format(root_dir), exist_ok=True)
         with open('{}/data/result/svm_common_dataset_result.csv'.format(root_dir), 'w') as result_file:
             result_df.to_csv(result_file)
+
+        with open('{}/data/result/test_result.csv'.format(root_dir), 'w') as test_result_file:
+            test_result_df.to_csv(test_result_file)
+
 
     @staticmethod
     def svm_model_train(x_train, y_train, C_list, kernels_list):

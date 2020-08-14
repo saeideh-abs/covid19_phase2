@@ -6,9 +6,9 @@ import numpy as np
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.model_selection import train_test_split
 from hazm import stopwords_list, Normalizer, word_tokenize
-from sklearn.model_selection import KFold
+from sklearn.model_selection import KFold, GridSearchCV
+from sklearn.metrics import accuracy_score
 from sklearn.svm import SVC
-from sklearn.model_selection import GridSearchCV
 
 
 class Embedding():
@@ -31,6 +31,51 @@ class Embedding():
         tfidf = TfidfVectorizer(vocabulary=vocab)
         term_doc_train = tfidf.fit_transform(raw_documents=x_train)
         return term_doc_train
+
+    def svm_with_common_data(self, vocabs):
+        print("you have been entered in svm classifier with common dataset between bert and svm")
+        train = pd.read_csv('../../data/statistics/common_train_test/polarity_no_multi_label_train.csv')
+        valid = pd.read_csv('../../data/statistics/common_train_test/polarity_no_multi_label_valid.csv')
+        test = pd.read_csv('../../data/statistics/common_train_test/polarity_no_multi_label_test.csv')
+        train_valid = pd.concat([train, valid], ignore_index=True)
+        train_valid_test = pd.concat([train_valid, test], ignore_index=True)
+
+        train_valid_size = train_valid.shape[0]
+        test_size = test.shape[0]
+
+        contents = train_valid_test['Content']
+        contents = self.hazm_sentences_tokenize(contents)
+        labels = train_valid_test[self.polarity].to_numpy()
+        post_ids = train_valid_test['Post Id']
+
+        term_doc = self.tfidf_embedding_train(contents, vocab=vocabs)
+        one_labels = Embedding.multi_label_to_one_label(labels)
+
+        X_train = term_doc[:train_valid_size]
+        X_test = term_doc[train_valid_size:]
+        y_train = one_labels[:train_valid_size]
+        y_test = one_labels[train_valid_size:]
+
+        c = 1
+        kernel = 'linear'
+        clf = SVC(C=c, kernel=kernel, probability=True)
+        clf.fit(X_train, y_train)
+        y_pred = clf.predict(X_test)
+        acc = accuracy_score(y_test, y_pred)
+        print("accuracy on test data", acc)
+
+        all_pred = clf.predict(term_doc)
+        all_acc = accuracy_score(one_labels, all_pred)
+        print("accuracy on all data (train and test)", all_acc)
+
+        result = np.concatenate((np.array(post_ids).reshape(-1, 1),
+                                 np.array(all_pred).reshape(-1, 1),
+                                 np.array(one_labels).reshape(-1, 1)),
+                                 axis=1)
+        result_df = pd.DataFrame(result, columns=['Post Id', 'predicted', 'real'])
+        os.makedirs('{}/data/result/'.format(root_dir), exist_ok=True)
+        with open('{}/data/result/svm_common_dataset_result.csv'.format(root_dir), 'w') as result_file:
+            result_df.to_csv(result_file)
 
     @staticmethod
     def svm_model_train(x_train, y_train, C_list, kernels_list):
@@ -103,6 +148,10 @@ emotions_vocabs = pd.read_csv('../../data/vectors/IG_features_emotion.csv')['wor
 
 embedding_instance = Embedding()
 
+# calculate accuracy on common train test data with maryam
+embedding_instance.svm_with_common_data(polarity_vocabs)
+
+
 # # polarity_section
 polarity_ids, polarity_contents, polarity_labels = embedding_instance.seperate_content_lables(polarity_file, 'Post Id',
                                                                                               'Content',
@@ -112,6 +161,7 @@ polarity_ids = polarity_ids.to_numpy()
 polarity_contents = Embedding.hazm_sentences_tokenize(polarity_contents)
 term_doc_train = Embedding().tfidf_embedding_train(polarity_contents, vocab=polarity_vocabs)
 final_train_labels = Embedding.multi_label_to_one_label(polarity_labels)
+
 C = [1]
 kernel = ['linear']
 predict_labels = Embedding.svm_model_train(term_doc_train, final_train_labels, C_list=C, kernels_list=kernel)
@@ -127,25 +177,26 @@ result_df = pd.DataFrame(result, columns=['Post Id', 'predicted', 'real'])
 os.makedirs('{}/data/result/'.format(root_dir), exist_ok=True)
 with open('{}/data/result/svm_result.csv'.format(root_dir), 'w') as result_file:
     result_df.to_csv(result_file)
+
 # ____________ cross validation part ______________
-# average_scores = 0
-# fold_numbers = 10
-# kf = KFold(n_splits=fold_numbers, shuffle=False)
-# for train_index, test_index in kf.split(polarity_contents):
-#     x_train, x_test = polarity_contents[train_index], polarity_contents[test_index]
-#     y_train, y_test = polarity_labels[train_index], polarity_labels[test_index]
-#
-#     term_doc_train, term_doc_test = Embedding().tfidf_embedding(x_train, x_test, 0.1, vocab=polarity_vocabs)
-#     final_train_labels = Embedding.multi_label_to_one_label(y_train)
-#     final_test_labels = Embedding.multi_label_to_one_label(y_test)
-#     # __________ classification part ___________
-#     C = [1]
-#     kernel = ['linear']
-#     score = Embedding.svm_model(term_doc_train, term_doc_test, final_train_labels, final_test_labels, C_list=C,
-#                                 kernels_list=kernel,
-#                                 cls_weight='balanced')
-#     average_scores += score
-# print(average_scores / 10)
+average_scores = 0
+fold_numbers = 10
+kf = KFold(n_splits=fold_numbers, shuffle=False)
+for train_index, test_index in kf.split(polarity_contents):
+    x_train, x_test = polarity_contents[train_index], polarity_contents[test_index]
+    y_train, y_test = polarity_labels[train_index], polarity_labels[test_index]
+
+    term_doc_train, term_doc_test = Embedding().tfidf_embedding(x_train, x_test, 0.1, vocab=polarity_vocabs)
+    final_train_labels = Embedding.multi_label_to_one_label(y_train)
+    final_test_labels = Embedding.multi_label_to_one_label(y_test)
+    # __________ classification part ___________
+    C = [1]
+    kernel = ['linear']
+    score = Embedding.svm_model(term_doc_train, term_doc_test, final_train_labels, final_test_labels, C_list=C,
+                                kernels_list=kernel,
+                                cls_weight='balanced')
+    average_scores += score
+print(average_scores / 10)
 #
 # # emotion section with vocabs
 # emotion_ids, emotions_content, emotions_labels = embedding_instance.seperate_content_lables(emotions_file, 'Post Id','Content',

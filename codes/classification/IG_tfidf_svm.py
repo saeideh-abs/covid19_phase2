@@ -64,6 +64,7 @@ class Embedding():
         term_doc_train = tfidf.fit_transform(raw_documents=x_train)
         return term_doc_train
 
+    # this function will calculate accuracy on common train test data with maryam(bert model)
     def svm_with_common_data(self, vocabs):
         print("you have been entered in svm classifier with common dataset between bert and svm")
         train = pd.read_csv('../../data/statistics/common_train_test/polarity_no_multi_label_train.csv')
@@ -220,8 +221,8 @@ emotions_vocabs = pd.read_csv('../../data/vectors/IG_features_emotion.csv')['wor
 
 embedding_instance = Embedding()
 
-# calculate accuracy on common train test data with maryam
-embedding_instance.svm_with_common_data(polarity_vocabs)
+# # calculate accuracy on common train test data with maryam
+# embedding_instance.svm_with_common_data(polarity_vocabs)
 
 # # polarity_section
 polarity_ids, \
@@ -232,6 +233,7 @@ polarity_labels = embedding_instance.seperate_content_lables(polarity_file,
                                                              embedding_instance.polarity)
 # embedding_instance.test_word2vec(polarity_contents, polarity_labels)
 # embedding_instance.svm_all(polarity_ids, polarity_contents)
+
 ### stop_words
 polarity_ids = polarity_ids.to_numpy()
 polarity_contents = Embedding.hazm_sentences_tokenize(polarity_contents)
@@ -256,11 +258,11 @@ for train_index, test_index in kf.split(polarity_contents):
                                 kernels_list=kernel,
                                 cls_weight='balanced')
     average_scores += score
-print(average_scores / 10)
+print("average score", average_scores / 10)
 #
 # # emotion section with vocabs
-# emotion_ids, emotions_content, emotions_labels = embedding_instance.seperate_content_lables(emotions_file, 'Post Id','Content',
-#                                                                                embedding_instance.emotional_tags)
+# emotion_ids, emotions_content, emotions_labels = embedding_instance.seperate_content_lables(emotions_file,
+#                     'Post Id','Content', embedding_instance.emotional_tags)
 # # ____________ cross validation part ______________
 # fold_numbers = 10
 # kf = KFold(n_splits=fold_numbers, shuffle=False)

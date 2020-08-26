@@ -4,6 +4,7 @@ import sys
 import pandas as pd
 import numpy as np
 from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.model_selection import KFold
 from sklearn.model_selection import train_test_split
 from hazm import Normalizer
 from sklearn.ensemble import RandomForestClassifier
@@ -17,12 +18,11 @@ class Embedding():
                                'استرس']
 
     @staticmethod
-    def tfidf_embedding(sentences_list, labels, test_size):
-        x_train, x_test, y_train, y_test = train_test_split(sentences_list, labels, test_size=test_size)
-        tfidf = TfidfVectorizer()
+    def tfidf_embedding(x_train, x_test, vocab=None):
+        tfidf = TfidfVectorizer(vocabulary=vocab)
         term_doc_train = tfidf.fit_transform(raw_documents=x_train)
         term_doc_test = tfidf.transform(raw_documents=x_test)
-        return term_doc_train, term_doc_test, y_train, y_test
+        return term_doc_train, term_doc_test
 
     @staticmethod
     def multi_label_to_one_label(labels):
@@ -74,19 +74,39 @@ emotions_file = '{}/data/statistics/emotions_no_multi_label.csv'.format(root_dir
 polarity_file = '{}/data/statistics/polarity_no_multi_label.csv'.format(root_dir)
 # Embedding('{}/data/manual_tag/statistics/clean_labeled_data.csv'.format(root_dir))
 embedding_instance = Embedding()
-emotion_contents, emotion_labels = embedding_instance.seperate_content_lables(emotions_file, 'Content',
-                                                                              embedding_instance.emotional_tags)
-term_doc_train, term_doc_test, train_labels, test_labels = Embedding.tfidf_embedding(emotion_contents, emotion_labels,
-                                                                                     0.1)
-final_train_labels = Embedding.multi_label_to_one_label(train_labels)
-final_test_labels = Embedding.multi_label_to_one_label(test_labels)
-Embedding.random_forest(term_doc_train, term_doc_test, final_train_labels, final_test_labels)
 
+####################################################
+# #############   polarity data   ###################
+####################################################
 polarity_contents, polarity_labels = embedding_instance.seperate_content_lables(polarity_file, 'Content',
                                                                                 embedding_instance.polarity)
 
-term_doc_train, term_doc_test, train_labels, test_labels = Embedding.tfidf_embedding(polarity_contents, polarity_labels,
-                                                                                     0.1)
-final_train_labels = Embedding.multi_label_to_one_label(train_labels)
-final_test_labels = Embedding.multi_label_to_one_label(test_labels)
-Embedding.random_forest(term_doc_train, term_doc_test, final_train_labels, final_test_labels)
+# ____________ cross validation part ______________
+scores = []
+fold_numbers = 10
+kf = KFold(n_splits=fold_numbers, shuffle=False)
+for train_index, test_index in kf.split(polarity_contents):
+    x_train, x_test = polarity_contents[train_index], polarity_contents[test_index]
+    y_train, y_test = polarity_labels[train_index], polarity_labels[test_index]
+
+    term_doc_train, term_doc_test = Embedding().tfidf_embedding(x_train, x_test, vocab=None)
+    final_train_labels = Embedding.multi_label_to_one_label(y_train)
+    final_test_labels = Embedding.multi_label_to_one_label(y_test)
+    # __________ classification part ___________
+    score = Embedding.random_forest(term_doc_train, term_doc_test, final_train_labels, final_test_labels)
+    scores.append(score)
+# print("average score", np.mean(scores))
+
+
+####################################################
+# #############   emotion data   ###################
+####################################################
+# emotion_contents, emotion_labels = embedding_instance.seperate_content_lables(emotions_file, 'Content',
+#                                                                               embedding_instance.emotional_tags)
+# term_doc_train, term_doc_test, train_labels, test_labels = Embedding.tfidf_embedding(emotion_contents, emotion_labels,
+#                                                                                      0.1)
+# final_train_labels = Embedding.multi_label_to_one_label(train_labels)
+# final_test_labels = Embedding.multi_label_to_one_label(test_labels)
+# Embedding.random_forest(term_doc_train, term_doc_test, final_train_labels, final_test_labels)
+
+

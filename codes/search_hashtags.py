@@ -36,11 +36,13 @@ def ret_posts_based_on_hashtags(data_folder_path, hashtags_file_path, labeled_da
                 data = pd.read_csv(file_name, header=1)
                 cleaned_data = clean_data(data)
 
-                for index, row in cleaned_data.iterrows():
-                    if hashtag.rstrip() in row["tokens"].split("|"):
-                        if str(row["postId"]) not in labeled_data["Post Id"].values.tolist():
-                            row["PostSource"] = file_typ
-                            retrieved_data_ids.append([row["postId"], file_typ, row["textField_nlp_normal"]])
+                tokens = cleaned_data['tokens']
+
+                for index, row in enumerate(tokens):
+                    if hashtag.rstrip() in row.split("|"):
+                        if str(cleaned_data.iloc[index,1]) not in labeled_data["Post Id"].values.tolist():
+                            retrieved_data_ids.append(
+                                [cleaned_data.iloc[index,1], file_typ, cleaned_data.iloc[index, 3]])
 
         # read news data
         file_typ = "news"
@@ -50,19 +52,21 @@ def ret_posts_based_on_hashtags(data_folder_path, hashtags_file_path, labeled_da
             data = pd.read_csv(file_name, header=1)
             cleaned_data = clean_data(data)
 
-            for index, row in cleaned_data.iterrows():
+            tokens = cleaned_data['newsAbstract_nlp_normal']
+
+            for index, row in enumerate(tokens):
                 # check for empty abstract news
-                if isinstance(row["newsAbstract_nlp_normal"], str):
-                    if hashtag.rstrip().replace("_", " ").replace("#", "") in row["newsAbstract_nlp_normal"]:
-                        if str(row["postId"]) not in labeled_data["Post Id"].values.tolist():
-                            retrieved_data_ids.append([row["postId"], file_typ, row["textField_nlp_normal"]])
+                if isinstance(row, str):
+                    if hashtag.rstrip().replace("_", " ").replace("#", "") in row:
+                        if str(cleaned_data.iloc[index,1]) not in labeled_data["Post Id"].values.tolist():
+                            retrieved_data_ids.append([cleaned_data.iloc[index,1], file_typ, row])
                             break
 
                 # check for empty news
-                if isinstance(row["textField_nlp_normal"], str):
-                    if hashtag.rstrip().replace("_", " ").replace("#", "") in row["textField_nlp_normal"]:
-                        if str(row["postId"]) not in labeled_data["Post Id"].values.tolist():
-                            retrieved_data_ids.append([row["postId"], file_typ, row["textField_nlp_normal"]])
+                if isinstance(row, str):
+                    if hashtag.rstrip().replace("_", " ").replace("#", "") in row:
+                        if str(cleaned_data.iloc[index,1]) not in labeled_data["Post Id"].values.tolist():
+                            retrieved_data_ids.append([cleaned_data.iloc[index,1], file_typ, row])
                             break
 
     print("run took time ", datetime.now() - current_time)

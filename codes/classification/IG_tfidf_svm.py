@@ -230,9 +230,13 @@ polarity_labels = embedding_instance.seperate_content_lables(polarity_file,
                                                              'Post Id',
                                                              'Content',
                                                              embedding_instance.polarity)
-embedding_instance.test_word2vec(polarity_contents, polarity_labels)
+# embedding_instance.test_word2vec(polarity_contents, polarity_labels)
 # embedding_instance.svm_all(polarity_ids, polarity_contents)
-
+### stop_words
+polarity_ids = polarity_ids.to_numpy()
+polarity_contents = Embedding.hazm_sentences_tokenize(polarity_contents)
+term_doc_train = Embedding().tfidf_embedding_train(polarity_contents, vocab=polarity_vocabs)
+final_train_labels = Embedding.multi_label_to_one_label(polarity_labels)
 
 # ____________ cross validation part ______________
 average_scores = 0

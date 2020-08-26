@@ -216,6 +216,10 @@ emotions_onelabel_file = '{}/data/statistics/emotions_no_multi_label.csv'.format
 polarity_file = '{}/data/statistics/polarity.csv'.format(root_dir)
 polarity_one_label_file = '{}/data/statistics/polarity_no_multi_label.csv'.format(root_dir)
 embedding_instance = Embedding()
+
+##################################################################
+##################### emotion data ###############################
+##################################################################
 # %%
 # one label info_gain
 # emotion_contents, emotion_labels = embedding_instance.seperate_content_lables(emotions_file, 'Content',
@@ -259,6 +263,10 @@ features_df = embedding_instance.create_features_dataframe(unigram_features, big
 # print(features_df['polarity'])
 # _______________ end of feature extraction part _________________________
 
+
+##################################################################
+###################### polarity data #############################
+##################################################################
 # %%
 Embedding.svm_model(term_doc_train, term_doc_test, final_train_labels, final_test_labels)
 

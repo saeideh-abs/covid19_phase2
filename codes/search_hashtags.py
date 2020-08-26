@@ -1,6 +1,6 @@
 from datetime import datetime
-
 import pandas as pd
+from tqdm import tqdm
 
 
 def clean_data(data):
@@ -27,47 +27,38 @@ def ret_posts_based_on_hashtags(data_folder_path, hashtags_file_path, labeled_da
     with open(hashtags_file_path, encoding="utf-8") as h_file:
         hashtags = h_file.readlines()
 
-    for hashtag in hashtags:
-        # read social network data
-        for file_typ in file_types:
-            for i in range(1, 10):
-                file_name = data_folder_path + "/" + file_typ + "/" + file_typ + "_corona98" + str(
-                    i) + "_normalized_tokenized_20.csv"
-                data = pd.read_csv(file_name, header=1)
-                cleaned_data = clean_data(data)
-
-                tokens = cleaned_data['tokens']
-
-                for index, row in enumerate(tokens):
-                    if hashtag.rstrip() in row.split("|"):
-                        if str(cleaned_data.iloc[index,1]) not in labeled_data["Post Id"].values.tolist():
-                            retrieved_data_ids.append(
-                                [cleaned_data.iloc[index,1], file_typ, cleaned_data.iloc[index, 3]])
-
-        # read news data
-        file_typ = "news"
-        for i in range(1, 10):
+    # read social network data
+    for file_typ in file_types:
+        for i in tqdm(range(1, 10)):
             file_name = data_folder_path + "/" + file_typ + "/" + file_typ + "_corona98" + str(
                 i) + "_normalized_tokenized_20.csv"
             data = pd.read_csv(file_name, header=1)
             cleaned_data = clean_data(data)
 
-            tokens = cleaned_data['newsAbstract_nlp_normal']
+            tokens = cleaned_data['tokens']
 
             for index, row in enumerate(tokens):
-                # check for empty abstract news
-                if isinstance(row, str):
-                    if hashtag.rstrip().replace("_", " ").replace("#", "") in row:
-                        if str(cleaned_data.iloc[index,1]) not in labeled_data["Post Id"].values.tolist():
-                            retrieved_data_ids.append([cleaned_data.iloc[index,1], file_typ, row])
-                            break
+                if any(hashtag.rstrip() in row.split("|") for hashtag in hashtags):
+                    if str(cleaned_data.iloc[index,1]) not in labeled_data["Post Id"].values.tolist():
+                        retrieved_data_ids.append(
+                            [cleaned_data.iloc[index,1], file_typ, cleaned_data.iloc[index, 3]])
 
-                # check for empty news
-                if isinstance(row, str):
-                    if hashtag.rstrip().replace("_", " ").replace("#", "") in row:
-                        if str(cleaned_data.iloc[index,1]) not in labeled_data["Post Id"].values.tolist():
-                            retrieved_data_ids.append([cleaned_data.iloc[index,1], file_typ, row])
-                            break
+    # read news data
+    file_typ = "news"
+    for i in tqdm(range(1, 10)):
+        file_name = data_folder_path + "/" + file_typ + "/" + file_typ + "_corona98" + str(
+            i) + "_normalized_tokenized_20.csv"
+        data = pd.read_csv(file_name, header=1)
+        cleaned_data = clean_data(data)
+        tokens = cleaned_data['textField_nlp_normal']
+
+        for index, row in enumerate(tokens):
+            # check for empty abstract news
+            if isinstance(row, str):
+                if any(hashtag.rstrip().replace("_", " ").replace("#", "") in row for hashtag in hashtags):
+                    if str(cleaned_data.iloc[index,1]) not in labeled_data["Post Id"].values.tolist():
+                        retrieved_data_ids.append([cleaned_data.iloc[index,1], file_typ, row])
+
 
     print("run took time ", datetime.now() - current_time)
     print("number of posts:", len(retrieved_data_ids))

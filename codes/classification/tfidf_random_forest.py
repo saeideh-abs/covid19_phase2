@@ -41,7 +41,7 @@ class Embedding():
 
     @staticmethod
     def random_forest(x_train, x_test, y_train, y_test):
-        clf = RandomForestClassifier()
+        clf = RandomForestClassifier(n_estimators=100, random_state=0)
         clf.fit(x_train, y_train)
         predicted_array = clf.predict(x_test)
         score = clf.score(x_test, y_test)

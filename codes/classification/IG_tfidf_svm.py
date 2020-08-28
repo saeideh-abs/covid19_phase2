@@ -70,6 +70,7 @@ class Embedding():
         train = pd.read_csv('../../data/statistics/common_train_test/polarity_no_multi_label_train.csv')
         valid = pd.read_csv('../../data/statistics/common_train_test/polarity_no_multi_label_valid.csv')
         test = pd.read_csv('../../data/statistics/common_train_test/polarity_no_multi_label_test.csv')
+
         train_valid = pd.concat([train, valid], ignore_index=True)
         train_valid_test = pd.concat([train_valid, test], ignore_index=True)
 
@@ -84,44 +85,59 @@ class Embedding():
         one_labels = Embedding.multi_label_to_one_label(labels)
 
         X_train = term_doc[:train_valid_size]
-        X_test = term_doc[train_valid_size:]
-        y_train = one_labels[:train_valid_size]
-        y_test = one_labels[train_valid_size:]
+        X_test = term_doc[train_valid_size:] # 10% test data
+        Y_train = one_labels[:train_valid_size]
+        Y_test = one_labels[train_valid_size:]
         post_ids = train_valid['Post Id']
         test_post_ids = test['Post Id']
 
-        c = 1
-        kernel = 'linear'
-        clf = SVC(C=c, kernel=kernel, probability=True)
-        clf.fit(X_train, y_train)
-        y_pred = clf.predict(X_test)
-        acc = accuracy_score(y_test, y_pred)
-        print("accuracy on test data", acc)
+        # ____________ cross validation part ______________
+        fold_numbers = 2
+        fold_index = 0
+        kf = KFold(n_splits=fold_numbers, shuffle=False)
+        for train_index, test_index in kf.split(X_train):
+            fold_index += 1
+            print(fold_index)
+            x_train, x_test = X_train[train_index], X_train[test_index]  # split 45% as train data
+            y_train, y_test = Y_train[train_index], Y_train[test_index]  # split 45% as test data
+            # __________ classification part ___________
+            c = 1
+            kernel = 'linear'
+            clf = SVC(C=c, kernel=kernel, probability=True)
+            clf.fit(x_train, y_train)
 
-        x_train_pred = clf.predict(X_train)
-        x_train_acc = accuracy_score(y_train, x_train_pred)
-        print("accuracy on train data", x_train_acc)
+            y_pred = clf.predict(x_test)  # these are the features for ensemble model
+            y_prob = clf.predict_proba(x_test).max(axis=1)
+            acc = accuracy_score(y_test, y_pred)
+            print("accuracy on 45% test data", acc)
 
-        result = np.concatenate((np.array(post_ids).reshape(-1, 1),
-                                 np.array(x_train_pred).reshape(-1, 1),
-                                 np.array(y_train).reshape(-1, 1)),
+            main_y_pred = clf.predict(X_test)  # accuracy on 10% test data
+            main_acc = accuracy_score(Y_test, main_y_pred)
+            main_y_prob = clf.predict_proba(X_test).max(axis=1)
+            print("accuracy on 10% test data", main_acc)
+
+            x_train_pred = clf.predict(x_train)
+            x_train_acc = accuracy_score(y_train, x_train_pred)
+            print("accuracy on 45% train data", x_train_acc)
+
+            # write results on new file
+            self.write_results(post_ids[test_index], y_pred, y_test, y_prob, 'svm_common_dataset_result' + str(fold_index))
+            self.write_results(test_post_ids, main_y_pred, Y_test, main_y_prob, '10%_test_result' + str(fold_index))
+
+
+    @staticmethod
+    def write_results(data_ids, data_prediction, data_real, probability, saved_file_name):
+        result = np.concatenate((np.array(data_ids).reshape(-1, 1),
+                                 np.array(data_prediction).reshape(-1, 1),
+                                 np.array(data_real).reshape(-1, 1),
+                                 np.array(probability).reshape(-1, 1)),
                                 axis=1)
 
-        test_result = np.concatenate((np.array(test_post_ids).reshape(-1, 1),
-                                 np.array(y_pred).reshape(-1, 1),
-                                 np.array(y_test).reshape(-1, 1)),
-                                axis=1)
+        result_df = pd.DataFrame(result, columns=['Post Id', 'predicted', 'real', 'probability'])
 
-        result_df = pd.DataFrame(result, columns=['Post Id', 'predicted', 'real'])
-        test_result_df = pd.DataFrame(test_result, columns=['Post Id', 'predicted', 'real'])
-
-        os.makedirs('{}/data/result/'.format(root_dir), exist_ok=True)
-        with open('{}/data/result/svm_common_dataset_result.csv'.format(root_dir), 'w') as result_file:
+        os.makedirs('../../data/result/'.format(root_dir), exist_ok=True)
+        with open('../../data/result/' + saved_file_name + '.csv'.format(root_dir), 'w') as result_file:
             result_df.to_csv(result_file)
-
-        with open('{}/data/result/test_result.csv'.format(root_dir), 'w') as test_result_file:
-            test_result_df.to_csv(test_result_file)
-
 
     @staticmethod
     def svm_model_train(x_train, y_train, C_list, kernels_list):
@@ -221,10 +237,13 @@ emotions_vocabs = pd.read_csv('../../data/vectors/IG_features_emotion.csv')['wor
 
 embedding_instance = Embedding()
 
-# # calculate accuracy on common train test data with maryam
-# embedding_instance.svm_with_common_data(polarity_vocabs)
+# calculate accuracy on common train test data with maryam
+embedding_instance.svm_with_common_data(polarity_vocabs)
 
-# # polarity_section
+############################################################
+# ################### polarity_section #####################
+############################################################
+
 polarity_ids, \
 polarity_contents, \
 polarity_labels = embedding_instance.seperate_content_lables(polarity_file,
@@ -259,8 +278,11 @@ for train_index, test_index in kf.split(polarity_contents):
                                 cls_weight='balanced')
     average_scores += score
 print("average score", average_scores / 10)
-#
-# # emotion section with vocabs
+
+############################################################
+# ################### emotion_section #####################
+############################################################
+
 # emotion_ids, emotions_content, emotions_labels = embedding_instance.seperate_content_lables(emotions_file,
 #                     'Post Id','Content', embedding_instance.emotional_tags)
 # # ____________ cross validation part ______________

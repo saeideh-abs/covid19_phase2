@@ -41,11 +41,11 @@ class Embedding():
 
     @staticmethod
     def random_forest(x_train, x_test, y_train, y_test):
-        clf = RandomForestClassifier()
+        clf = RandomForestClassifier(n_estimators=100, random_state=0)
         clf.fit(x_train, y_train)
         predicted_array = clf.predict(x_test)
-        print(np.sum(predicted_array == y_test) / len(y_test))
-        return predicted_array
+        score = clf.score(x_test, y_test)
+        return score
 
     def seperate_content_lables(self, filename, content, label_fields):
         df = pd.read_csv(filename)
@@ -94,8 +94,9 @@ for train_index, test_index in kf.split(polarity_contents):
     final_test_labels = Embedding.multi_label_to_one_label(y_test)
     # __________ classification part ___________
     score = Embedding.random_forest(term_doc_train, term_doc_test, final_train_labels, final_test_labels)
+    print(score)
     scores.append(score)
-# print("average score", np.mean(scores))
+print("average score", np.mean(scores))
 
 
 ####################################################

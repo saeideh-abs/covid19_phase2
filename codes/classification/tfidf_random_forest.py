@@ -19,7 +19,7 @@ class Embedding():
 
     @staticmethod
     def tfidf_embedding(x_train, x_test, vocab=None):
-        tfidf = TfidfVectorizer(vocabulary=vocab)
+        tfidf = TfidfVectorizer(vocabulary=vocab, min_df=5, max_df=0.8, sublinear_tf=True, use_idf=True)
         term_doc_train = tfidf.fit_transform(raw_documents=x_train)
         term_doc_test = tfidf.transform(raw_documents=x_test)
         return term_doc_train, term_doc_test
@@ -100,7 +100,7 @@ polarity_contents, polarity_labels = embedding_instance.seperate_content_lables(
                                                                                 embedding_instance.polarity)
 
 # ____________ cross validation part ______________
-embedding_instance.cross_validation(polarity_contents, polarity_labels, fold_num=10)
+embedding_instance.cross_validation(polarity_contents, polarity_labels, fold_num=10, shuffle=True)
 
 ####################################################
 # #############   emotion data   ###################
@@ -108,6 +108,5 @@ embedding_instance.cross_validation(polarity_contents, polarity_labels, fold_num
 emotion_contents, emotion_labels = embedding_instance.seperate_content_lables(emotions_file, 'Content',
                                                                               embedding_instance.emotional_tags)
 # ____________ cross validation part ______________
-embedding_instance.cross_validation(emotion_contents, emotion_labels, fold_num=5)
-
+embedding_instance.cross_validation(emotion_contents, emotion_labels, fold_num=5, shuffle=True)
 

@@ -47,6 +47,24 @@ class Embedding():
         score = clf.score(x_test, y_test)
         return score
 
+    def cross_validation(self, X, y, fold_num, vocabs=None, shuffle=False):
+        scores = []
+        fold_numbers = fold_num
+        kf = KFold(n_splits=fold_numbers, shuffle=shuffle)
+        for train_index, test_index in kf.split(X):
+            x_train, x_test = X[train_index], X[test_index]
+            y_train, y_test = y[train_index], y[test_index]
+
+            term_doc_train, term_doc_test = self.tfidf_embedding(x_train, x_test, vocab=vocabs)
+            final_train_labels = self.multi_label_to_one_label(y_train)
+            final_test_labels = self.multi_label_to_one_label(y_test)
+            # __________ classification part ___________
+            score = self.random_forest(term_doc_train, term_doc_test, final_train_labels, final_test_labels)
+            print(score)
+            scores.append(score)
+        print("average score", np.mean(scores))
+        return scores
+
     def seperate_content_lables(self, filename, content, label_fields):
         df = pd.read_csv(filename)
         content = df.loc[:, content]
@@ -82,32 +100,14 @@ polarity_contents, polarity_labels = embedding_instance.seperate_content_lables(
                                                                                 embedding_instance.polarity)
 
 # ____________ cross validation part ______________
-scores = []
-fold_numbers = 10
-kf = KFold(n_splits=fold_numbers, shuffle=False)
-for train_index, test_index in kf.split(polarity_contents):
-    x_train, x_test = polarity_contents[train_index], polarity_contents[test_index]
-    y_train, y_test = polarity_labels[train_index], polarity_labels[test_index]
-
-    term_doc_train, term_doc_test = Embedding().tfidf_embedding(x_train, x_test, vocab=None)
-    final_train_labels = Embedding.multi_label_to_one_label(y_train)
-    final_test_labels = Embedding.multi_label_to_one_label(y_test)
-    # __________ classification part ___________
-    score = Embedding.random_forest(term_doc_train, term_doc_test, final_train_labels, final_test_labels)
-    print(score)
-    scores.append(score)
-print("average score", np.mean(scores))
-
+embedding_instance.cross_validation(polarity_contents, polarity_labels, fold_num=10)
 
 ####################################################
 # #############   emotion data   ###################
 ####################################################
-# emotion_contents, emotion_labels = embedding_instance.seperate_content_lables(emotions_file, 'Content',
-#                                                                               embedding_instance.emotional_tags)
-# term_doc_train, term_doc_test, train_labels, test_labels = Embedding.tfidf_embedding(emotion_contents, emotion_labels,
-#                                                                                      0.1)
-# final_train_labels = Embedding.multi_label_to_one_label(train_labels)
-# final_test_labels = Embedding.multi_label_to_one_label(test_labels)
-# Embedding.random_forest(term_doc_train, term_doc_test, final_train_labels, final_test_labels)
+emotion_contents, emotion_labels = embedding_instance.seperate_content_lables(emotions_file, 'Content',
+                                                                              embedding_instance.emotional_tags)
+# ____________ cross validation part ______________
+embedding_instance.cross_validation(emotion_contents, emotion_labels, fold_num=5)
 
 

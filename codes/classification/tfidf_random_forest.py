@@ -19,7 +19,7 @@ class Embedding():
 
     @staticmethod
     def tfidf_embedding(x_train, x_test, vocab=None):
-        tfidf = TfidfVectorizer(vocabulary=vocab)
+        tfidf = TfidfVectorizer(vocabulary=vocab, min_df=5, max_df=0.8, sublinear_tf=True, use_idf=True)
         term_doc_train = tfidf.fit_transform(raw_documents=x_train)
         term_doc_test = tfidf.transform(raw_documents=x_test)
         return term_doc_train, term_doc_test

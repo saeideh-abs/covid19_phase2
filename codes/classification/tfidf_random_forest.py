@@ -100,7 +100,7 @@ polarity_contents, polarity_labels = embedding_instance.seperate_content_lables(
                                                                                 embedding_instance.polarity)
 
 # ____________ cross validation part ______________
-embedding_instance.cross_validation(polarity_contents, polarity_labels, fold_num=10)
+embedding_instance.cross_validation(polarity_contents, polarity_labels, fold_num=10, shuffle=True)
 
 ####################################################
 # #############   emotion data   ###################
@@ -108,6 +108,5 @@ embedding_instance.cross_validation(polarity_contents, polarity_labels, fold_num
 emotion_contents, emotion_labels = embedding_instance.seperate_content_lables(emotions_file, 'Content',
                                                                               embedding_instance.emotional_tags)
 # ____________ cross validation part ______________
-embedding_instance.cross_validation(emotion_contents, emotion_labels, fold_num=5)
-
+embedding_instance.cross_validation(emotion_contents, emotion_labels, fold_num=5, shuffle=True)
 

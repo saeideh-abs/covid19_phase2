@@ -4,6 +4,10 @@ import numpy as np
 from hazm import *
 from sklearn.feature_extraction.text import TfidfVectorizer, CountVectorizer
 from sklearn.decomposition import NMF, LatentDirichletAllocation
+from sklearn.exceptions import ConvergenceWarning
+import warnings
+warnings.simplefilter("ignore", DeprecationWarning)
+warnings.simplefilter("ignore", ConvergenceWarning)
 
 
 def hazm_sentences_tokenize(docs, joined=True, numpy_array=True):

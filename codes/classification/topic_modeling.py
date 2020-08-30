@@ -4,6 +4,10 @@ import numpy as np
 from hazm import *
 from sklearn.feature_extraction.text import TfidfVectorizer, CountVectorizer
 from sklearn.decomposition import NMF, LatentDirichletAllocation
+from sklearn.exceptions import ConvergenceWarning
+import warnings
+warnings.simplefilter("ignore", DeprecationWarning)
+warnings.simplefilter("ignore", ConvergenceWarning)
 
 
 def hazm_sentences_tokenize(docs, joined=True, numpy_array=True):
@@ -72,7 +76,7 @@ if __name__ == '__main__':
     documents = hazm_sentences_tokenize(documents)
 
     number_of_features = 1000
-    number_of_topics = 20
+    number_of_topics = 10
     number_of_top_words = 10
 
     NMF_topic_modeling(documents, no_features=number_of_features,

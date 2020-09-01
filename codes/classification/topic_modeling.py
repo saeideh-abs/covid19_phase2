@@ -8,6 +8,8 @@ from sklearn.feature_extraction.text import TfidfVectorizer, CountVectorizer
 from sklearn.decomposition import NMF, LatentDirichletAllocation
 from sklearn.exceptions import ConvergenceWarning
 import warnings
+from tqdm import tqdm
+
 warnings.simplefilter("ignore", DeprecationWarning)
 warnings.simplefilter("ignore", ConvergenceWarning)
 
@@ -30,7 +32,8 @@ def text_cleaner(docs):
         doc_words = word_tokenize(normal_text)
         without_stop_words = [word for word in doc_words if word not in stop_words]
         # stem = [stemmer.stem(word) for word in without_stop_words]
-        lemm = [lemmatizer.lemmatize(word).split('#')[0] for word in without_stop_words] # get the past part of the lemm
+        lemm = [lemmatizer.lemmatize(word).split('#')[0] for word in
+                without_stop_words]  # get the past part of the lemm
         final_text.append(' '.join(lemm))
     return final_text
 
@@ -41,10 +44,19 @@ def hazm_sentences_tokenize(docs, joined=True, numpy_array=True):
     # stop_words = stopwords_list()
     stop_words = open('../../resources/stopwords_list.txt', encoding="utf8").read().split('\n')
 
-    for elem in docs:
+    for elem in tqdm(docs):
         normalize_sentence = normalizer.normalize(elem)
         sentence_words = word_tokenize(normalize_sentence)
         without_stop_words = [elem for elem in sentence_words if elem not in stop_words]
+        for word in without_stop_words:
+            if word == 'های':
+                print(word)
+            if word == 'اند':
+                print(word)
+            if word == 'ها':
+                print(word)
+            if word == 'می':
+                print(word)
         if joined:
             normalize_content.append(' '.join(without_stop_words))
         else:
@@ -58,6 +70,16 @@ def hazm_sentences_tokenize(docs, joined=True, numpy_array=True):
 def NMF_topic_modeling(docs, no_features, no_topics, no_top_words):
     # NMF is able to use tf-idf
     tfidf_vecs, tfidf_feature_names = build_tfidf(docs, no_features=no_features)
+    print(tfidf_feature_names)
+    for word in tfidf_feature_names:
+        if word == 'های':
+            print(word)
+        if word == 'اند':
+            print(word)
+        if word == 'ها':
+            print(word)
+        if word == 'می':
+            print(word)
     # Run NMF
     nmf = NMF(n_components=no_topics, random_state=1, alpha=.1, l1_ratio=.5, init='nndsvd').fit(tfidf_vecs)
     topics_dict = return_topics(nmf, tfidf_feature_names, no_top_words)
@@ -108,7 +130,7 @@ def return_topics(model, feature_names, no_top_words):
     for topic_idx, topic in enumerate(model.components_):
         topic_name = "topic" + str(topic_idx)
         topic_words = " ".join([feature_names[i]
-                        for i in topic.argsort()[:-no_top_words - 1:-1]])
+                                for i in topic.argsort()[:-no_top_words - 1:-1]])
         keys.append(topic_name)
         values.append(topic_words)
     return dict(zip(keys, values))
@@ -130,7 +152,7 @@ if __name__ == '__main__':
     documents = dataset['textField_nlp_normal']
 
     print("preprocessing using hazm", display_current_time())
-    documents = hazm_sentences_tokenize(documents, numpy_array=False)
+    documents = hazm_sentences_tokenize(documents)
     # documents = text_cleaner(documents)
 
     # _______________ topic modeling part _______________
@@ -140,13 +162,13 @@ if __name__ == '__main__':
 
     print("NMF topic modeling", display_current_time())
     nmf_topics_dictionary, nmf_document_best_topic = NMF_topic_modeling(documents, no_features=number_of_features,
-                       no_topics=number_of_topics,
-                       no_top_words=number_of_top_words)
+                                                                        no_topics=number_of_topics,
+                                                                        no_top_words=number_of_top_words)
 
     print("LDA topic modeling", display_current_time())
     lda_topics_dictionary, lda_document_best_topic = LDA_topic_modeling(documents, no_features=number_of_features,
-                       no_topics=number_of_topics,
-                       no_top_words=number_of_top_words)
+                                                                        no_topics=number_of_topics,
+                                                                        no_top_words=number_of_top_words)
     print(display_current_time())
 
     # _______________ write results _______________

@@ -34,7 +34,7 @@ def ret_posts_based_on_hashtags(data_folder_path, hashtags_file_path, labeled_da
         for i in tqdm(range(1, 10)):
             file_name = data_folder_path + "/" + file_type + '_normal' + "/" + file_type + "_corona98" + str(
                 i) + "_normalized_tokenized_pid.csv"
-            data = pd.read_csv(file_name, header=1)
+            data = pd.read_csv(file_name, header=0)
             cleaned_data = clean_data(data)
 
             tokens = cleaned_data['tokens']
@@ -61,7 +61,7 @@ def ret_posts_based_on_hashtags(data_folder_path, hashtags_file_path, labeled_da
     count = 0
     for i in tqdm(range(1, 10)):
         file_name = data_folder_path + "/" + file_type + '_normal' + "/" + file_type + "_corona98" + str(
-            i) + "_normalized_tokenized_pid.txt"
+            i) + "_normalized_tokenized_pid.csv"
         data = pd.read_csv(file_name, header=1)
         cleaned_data = clean_data(data)
         tokens = cleaned_data['textField_nlp_normal']

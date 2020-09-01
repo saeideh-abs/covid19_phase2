@@ -32,8 +32,8 @@ def ret_posts_based_on_hashtags(data_folder_path, hashtags_file_path, labeled_da
     for file_type in file_types:
         count = 0
         for i in tqdm(range(1, 10)):
-            file_name = data_folder_path + "/" + file_type + "/" + file_type + "_corona98" + str(
-                i) + "_normalized_tokenized_20.csv"
+            file_name = data_folder_path + "/" + file_type + '_normal' + "/" + file_type + "_corona98" + str(
+                i) + "_normalized_tokenized_pid.csv"
             data = pd.read_csv(file_name, header=1)
             cleaned_data = clean_data(data)
 
@@ -60,8 +60,8 @@ def ret_posts_based_on_hashtags(data_folder_path, hashtags_file_path, labeled_da
     file_type = "news"
     count = 0
     for i in tqdm(range(1, 10)):
-        file_name = data_folder_path + "/" + file_type + "/" + file_type + "_corona98" + str(
-            i) + "_normalized_tokenized_20.csv"
+        file_name = data_folder_path + "/" + file_type + '_normal' + "/" + file_type + "_corona98" + str(
+            i) + "_normalized_tokenized_pid.txt"
         data = pd.read_csv(file_name, header=1)
         cleaned_data = clean_data(data)
         tokens = cleaned_data['textField_nlp_normal']
@@ -82,11 +82,11 @@ def ret_posts_based_on_hashtags(data_folder_path, hashtags_file_path, labeled_da
 if __name__ == '__main__':
     # data files path
     hashtags_file_path = "../resources/politics_hashtag.txt"
-    data_folder_path = "../data/pre_process_1"
+    data_folder_path = "../data/all_data"
     labeled_data_path = "../data/manual_tag/Labeled-Data-v1.csv"
 
     retrieved_data_ids = ret_posts_based_on_hashtags(data_folder_path, hashtags_file_path, labeled_data_path,
                                                      delete_hashtag_text=True, hashtag_percent=0.9)
     ret = pd.DataFrame(retrieved_data_ids,
                        columns=['postId', 'net_type', 'textField_nlp_normal'])
-    ret.to_csv("../data/politics.csv", index=False)
+    ret.to_csv("../data/politics_100%.csv", index=False)

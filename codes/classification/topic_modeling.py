@@ -89,14 +89,14 @@ def LDA_topic_modeling(docs, no_features, no_topics, no_top_words):
 
 
 def build_tfidf(docs, no_features):
-    tfidf_vectorizer = TfidfVectorizer(max_df=0.8, min_df=5, max_features=no_features)
+    tfidf_vectorizer = TfidfVectorizer(max_df=0.8, min_df=10, max_features=no_features)
     tfidf = tfidf_vectorizer.fit_transform(docs)
     tfidf_feature_names = tfidf_vectorizer.get_feature_names()
     return tfidf, tfidf_feature_names
 
 
 def build_tf(docs, no_features):
-    tf_vectorizer = CountVectorizer(max_df=0.8, min_df=5, max_features=no_features)
+    tf_vectorizer = CountVectorizer(max_df=0.8, min_df=10, max_features=no_features)
     tf = tf_vectorizer.fit_transform(docs)
     tf_feature_names = tf_vectorizer.get_feature_names()
     return tf, tf_feature_names
@@ -134,7 +134,7 @@ if __name__ == '__main__':
     # documents = text_cleaner(documents)
 
     # _______________ topic modeling part _______________
-    number_of_features = 1000
+    number_of_features = 700
     number_of_topics = 10
     number_of_top_words = 10
 

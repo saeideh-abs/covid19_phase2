@@ -18,14 +18,33 @@ def display_current_time():
     return current_time
 
 
+def text_cleaner(docs):
+    stop_words = open('../../resources/stopwords_list.txt', encoding="utf8").read().split('\n')
+    normalizer = Normalizer(persian_numbers=False)
+    stemmer = Stemmer()
+    lemmatizer = Lemmatizer()
+    final_text = []
+
+    for doc in docs:
+        normal_text = normalizer.normalize(doc)
+        doc_words = word_tokenize(normal_text)
+        without_stop_words = [word for word in doc_words if word not in stop_words]
+        # stem = [stemmer.stem(word) for word in without_stop_words]
+        lemm = [lemmatizer.lemmatize(word).split('#')[0] for word in without_stop_words] # get the past part of the lemm
+        final_text.append(' '.join(lemm))
+    return final_text
+
+
 def hazm_sentences_tokenize(docs, joined=True, numpy_array=True):
     normalizer = Normalizer(persian_numbers=False)
     normalize_content = []
-    hazm_stopwords = stopwords_list()
+    # stop_words = stopwords_list()
+    stop_words = open('../../resources/stopwords_list.txt', encoding="utf8").read().split('\n')
+
     for elem in docs:
         normalize_sentence = normalizer.normalize(elem)
         sentence_words = word_tokenize(normalize_sentence)
-        without_stop_words = [elem for elem in sentence_words if elem not in hazm_stopwords]
+        without_stop_words = [elem for elem in sentence_words if elem not in stop_words]
         if joined:
             normalize_content.append(' '.join(without_stop_words))
         else:
@@ -70,14 +89,14 @@ def LDA_topic_modeling(docs, no_features, no_topics, no_top_words):
 
 
 def build_tfidf(docs, no_features):
-    tfidf_vectorizer = TfidfVectorizer(max_df=0.95, min_df=2, max_features=no_features)
+    tfidf_vectorizer = TfidfVectorizer(max_df=0.8, min_df=5, max_features=no_features)
     tfidf = tfidf_vectorizer.fit_transform(docs)
     tfidf_feature_names = tfidf_vectorizer.get_feature_names()
     return tfidf, tfidf_feature_names
 
 
 def build_tf(docs, no_features):
-    tf_vectorizer = CountVectorizer(max_df=0.95, min_df=2, max_features=no_features)
+    tf_vectorizer = CountVectorizer(max_df=0.8, min_df=5, max_features=no_features)
     tf = tf_vectorizer.fit_transform(docs)
     tf_feature_names = tf_vectorizer.get_feature_names()
     return tf, tf_feature_names
@@ -112,6 +131,7 @@ if __name__ == '__main__':
 
     print("preprocessing using hazm", display_current_time())
     documents = hazm_sentences_tokenize(documents, numpy_array=False)
+    # documents = text_cleaner(documents)
 
     # _______________ topic modeling part _______________
     number_of_features = 1000

@@ -81,7 +81,7 @@ def ret_posts_based_on_hashtags(data_folder_path, hashtags_file_path, labeled_da
 
 if __name__ == '__main__':
     # data files path
-    hashtags_file_path = "../resources/politics_hashtag.txt"
+    hashtags_file_path = "../resources/economy_hashtag.txt"
     data_folder_path = "../data/all_data"
     labeled_data_path = "../data/manual_tag/Labeled-Data-v1.csv"
 
@@ -89,4 +89,4 @@ if __name__ == '__main__':
                                                      delete_hashtag_text=True, hashtag_percent=0.9)
     ret = pd.DataFrame(retrieved_data_ids,
                        columns=['postId', 'net_type', 'textField_nlp_normal'])
-    ret.to_csv("../data/politics_100%.csv", index=False)
+    ret.to_csv("../data/economy_100%.csv", index=False)

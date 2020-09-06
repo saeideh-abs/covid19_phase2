@@ -144,7 +144,7 @@ def display_topics(topics_dict):
 
 if __name__ == '__main__':
     # _______________ loading the data and preprocessing _______________
-    dataset = pd.read_csv('../../data/politics.csv', na_values='')
+    dataset = pd.read_csv('../../data/politics_100%.csv', na_values='')
 
     print("search and remove null values", display_current_time())
     nan_indices = np.where(dataset['textField_nlp_normal'].isnull())[0]  # get index of null values
@@ -173,7 +173,13 @@ if __name__ == '__main__':
 
     # _______________ write results _______________
     dataset["topic_index"] = nmf_document_best_topic
-    dataset.to_csv('../../data/politics_with_topics.csv', index=False)
+    dataset.to_csv('../../data/nmf_politics100%_with_topics.csv', index=False)
 
-    with open('../../data/nmf_topics_dictionary.json', 'w', encoding='utf-8') as fp:
+    with open('../../data/nmf_politics_topics_dic.json', 'w', encoding='utf-8') as fp:
         json.dump(nmf_topics_dictionary, fp, ensure_ascii=False)
+
+    dataset["topic_index"] = lda_document_best_topic
+    dataset.to_csv('../../data/lda_politics100%_with_topics.csv', index=False)
+
+    with open('../../data/lda_politics_topics_dic.json', 'w', encoding='utf-8') as fp:
+        json.dump(lda_topics_dictionary, fp, ensure_ascii=False)

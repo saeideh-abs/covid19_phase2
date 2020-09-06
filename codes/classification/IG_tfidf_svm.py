@@ -81,11 +81,12 @@ class Embedding():
         contents = self.hazm_sentences_tokenize(contents)
         labels = train_valid_test[self.polarity].to_numpy()
 
-        term_doc = self.tfidf_embedding_train(contents, vocab=vocabs)
+        X_train, X_test = self.tfidf_embedding(contents[:train_valid_size],
+                                                             contents[train_valid_size:],
+                                                             test_size=0,
+                                                             vocab=vocabs)
         one_labels = Embedding.multi_label_to_one_label(labels)
 
-        X_train = term_doc[:train_valid_size]
-        X_test = term_doc[train_valid_size:] # 10% test data
         Y_train = one_labels[:train_valid_size]
         Y_test = one_labels[train_valid_size:]
         post_ids = train_valid['Post Id']
@@ -256,8 +257,8 @@ polarity_labels = embedding_instance.seperate_content_lables(polarity_file,
 ### stop_words
 polarity_ids = polarity_ids.to_numpy()
 polarity_contents = Embedding.hazm_sentences_tokenize(polarity_contents)
-term_doc_train = Embedding().tfidf_embedding_train(polarity_contents, vocab=polarity_vocabs)
-final_train_labels = Embedding.multi_label_to_one_label(polarity_labels)
+# term_doc_train = Embedding().tfidf_embedding_train(polarity_contents, vocab=polarity_vocabs)
+# final_train_labels = Embedding.multi_label_to_one_label(polarity_labels)
 
 # ____________ cross validation part ______________
 average_scores = 0

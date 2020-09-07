@@ -51,10 +51,10 @@ def ret_posts_based_on_hashtags(data_folder_path, hashtags_file_path, labeled_da
                 if delete_hashtag_text and all('#' in word for word in words):
                     continue
                 if any(hashtag.rstrip() in words for hashtag in hashtags):
-                    if str(cleaned_data.iloc[index, 1]) not in labeled_data["Post Id"].values.tolist():
+                    if str(cleaned_data.iloc[index, 0]) not in labeled_data["Post Id"].values.tolist():
                         count += 1
                         retrieved_data_ids.append(
-                            [cleaned_data.iloc[index, 1], file_type, cleaned_data.iloc[index, 3]])
+                            [cleaned_data.iloc[index, 0], file_type, cleaned_data.iloc[index, 2]])
         print('{}-{}'.format(file_type, count))
     # read news data
     file_type = "news"
@@ -70,9 +70,9 @@ def ret_posts_based_on_hashtags(data_folder_path, hashtags_file_path, labeled_da
             # check for empty abstract news
             if isinstance(row, str):
                 if any(hashtag.rstrip().replace("_", " ").replace("#", "") in row for hashtag in hashtags):
-                    if str(cleaned_data.iloc[index, 1]) not in labeled_data["Post Id"].values.tolist():
+                    if str(cleaned_data.iloc[index, 0]) not in labeled_data["Post Id"].values.tolist():
                         count += 1
-                        retrieved_data_ids.append([cleaned_data.iloc[index, 1], file_type, row])
+                        retrieved_data_ids.append([cleaned_data.iloc[index, 0], file_type, row])
     print('{}-{}'.format(file_type, count))
     print("run took time ", datetime.now() - current_time)
     print("number of posts:", len(retrieved_data_ids))

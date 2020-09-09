@@ -142,7 +142,7 @@ def write_results(data_df, doc_best_topic, hashtags_filename, topics_dic, topics
 
 if __name__ == '__main__':
     # _______________ loading the data and preprocessing _______________
-    dataset = pd.read_csv('../../data/politics20%.csv', na_values='')
+    dataset = pd.read_csv('../../data/economy_100%.csv', na_values='')
 
     print("search and remove null values", display_current_time())
     nan_indices = np.where(dataset['textField_nlp_normal'].isnull())[0]  # get index of null values
@@ -172,11 +172,11 @@ if __name__ == '__main__':
 
     # _______________ write results _______________
     write_results(dataset, doc_best_topic=nmf_document_best_topic,
-                  hashtags_filename='nmf_politics100%_with_topics',
+                  hashtags_filename='nmf_economy100%_with_topics',
                   topics_dic=nmf_topics_dictionary,
-                  topics_filename='nmf_politics_topics_dic')
+                  topics_filename='nmf_economy_topics_dic')
 
     write_results(dataset, doc_best_topic=lda_document_best_topic,
-                  hashtags_filename='lda_politics100%_with_topics',
+                  hashtags_filename='lda_economy100%_with_topics',
                   topics_dic=lda_topics_dictionary,
-                  topics_filename='lda_politics_topics_dic')
+                  topics_filename='lda_economy_topics_dic')

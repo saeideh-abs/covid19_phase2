@@ -30,27 +30,27 @@ def text_cleaner(docs):
     for doc in docs:
         normal_text = normalizer.normalize(doc)
         doc_words = word_tokenize(normal_text)
-        without_stop_words = [word for word in doc_words if word not in stop_words]
         # stem = [stemmer.stem(word) for word in without_stop_words]
         lemm = [lemmatizer.lemmatize(word).split('#')[0] for word in
-                without_stop_words]  # get the past part of the lemm
-        final_text.append(' '.join(lemm))
+                doc_words]  # get the past part of the lemm
+        without_stop_words = [word for word in lemm if word not in stop_words]
+        final_text.append(' '.join(without_stop_words))
     return final_text
 
 
 def hazm_sentences_tokenize(docs, joined=True, numpy_array=True):
     normalizer = Normalizer(persian_numbers=False)
     normalize_content = []
-    # stop_words = stopwords_list()
+    # stop_words = stopwords_list()  #hazm stopwords
     stop_words = open('../../resources/stopwords_list.txt', encoding="utf8").read().split('\n')
 
     for elem in tqdm(docs):
         normalize_sentence = normalizer.normalize(elem)
         sentence_words = word_tokenize(normalize_sentence)
         without_stop_words = [elem for elem in sentence_words if elem not in stop_words]
-        for word in without_stop_words:
-            if word == 'های' or word == 'اند' or word == 'ها' or word == 'می':
-                print(word, "in stop words")
+        # for word in without_stop_words:
+        #     if word == 'های' or word == 'اند' or word == 'ها' or word == 'می':
+        #         print(word, "in stop words")
         if joined:
             normalize_content.append(' '.join(without_stop_words))
         else:
@@ -64,16 +64,12 @@ def hazm_sentences_tokenize(docs, joined=True, numpy_array=True):
 def NMF_topic_modeling(docs, no_features, no_topics, no_top_words):
     # NMF is able to use tf-idf
     tfidf_vecs, tfidf_feature_names = build_tfidf(docs, no_features=no_features)
+    print("tf_idf features:")
     print(tfidf_feature_names)
-    for word in tfidf_feature_names:
-        if word == 'های':
-            print(word)
-        if word == 'اند':
-            print(word)
-        if word == 'ها':
-            print(word)
-        if word == 'می':
-            print(word)
+    # for word in tfidf_feature_names:
+    #     if word == 'های' or word == 'اند' or word == 'ها' or word == 'می' or word == 'ای' or word == 'نمی':
+    #         print(word, "in NMF")
+
     # Run NMF
     nmf = NMF(n_components=no_topics, random_state=1, alpha=.1, l1_ratio=.5, init='nndsvd').fit(tfidf_vecs)
     topics_dict = return_topics(nmf, tfidf_feature_names, no_top_words)
@@ -105,14 +101,14 @@ def LDA_topic_modeling(docs, no_features, no_topics, no_top_words):
 
 
 def build_tfidf(docs, no_features):
-    tfidf_vectorizer = TfidfVectorizer(max_df=0.8, min_df=10, max_features=no_features)
+    tfidf_vectorizer = TfidfVectorizer(tokenizer=word_tokenize, max_df=0.7, min_df=10, max_features=no_features, ngram_range=(1, 1))
     tfidf = tfidf_vectorizer.fit_transform(docs)
     tfidf_feature_names = tfidf_vectorizer.get_feature_names()
     return tfidf, tfidf_feature_names
 
 
 def build_tf(docs, no_features):
-    tf_vectorizer = CountVectorizer(max_df=0.8, min_df=10, max_features=no_features)
+    tf_vectorizer = CountVectorizer(tokenizer=word_tokenize, max_df=0.7, min_df=10, max_features=no_features, ngram_range=(1, 1))
     tf = tf_vectorizer.fit_transform(docs)
     tf_feature_names = tf_vectorizer.get_feature_names()
     return tf, tf_feature_names
@@ -156,7 +152,6 @@ if __name__ == '__main__':
     print("preprocessing using hazm", display_current_time())
     documents = hazm_sentences_tokenize(documents, numpy_array=False)
     # documents = text_cleaner(documents)
-    print(documents)
     # _______________ topic modeling part _______________
     number_of_features = 700
     number_of_topics = 10

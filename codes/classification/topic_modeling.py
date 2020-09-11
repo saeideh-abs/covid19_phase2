@@ -218,4 +218,4 @@ if __name__ == '__main__':
 
     # all_docs_main(dataset)
     socialnets_main(socialnets_dataset)
-    # news_main(news_dataset)
+    news_main(news_dataset)

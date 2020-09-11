@@ -9,7 +9,7 @@ from sklearn.decomposition import NMF, LatentDirichletAllocation
 from sklearn.exceptions import ConvergenceWarning
 import warnings
 from tqdm import tqdm
-
+import re
 warnings.simplefilter("ignore", DeprecationWarning)
 warnings.simplefilter("ignore", ConvergenceWarning)
 
@@ -52,6 +52,7 @@ def hazm_sentences_tokenize(docs, joined=True, numpy_array=True):
 
     for elem in tqdm(docs):
         normalize_sentence = normalizer.normalize(elem)
+        normalize_sentence = re.sub(r'\d+', '', normalize_sentence)
         sentence_words = word_tokenize(normalize_sentence)
         without_stop_words = [elem for elem in sentence_words if elem not in stop_words]
         # for word in without_stop_words:
@@ -71,7 +72,7 @@ def NMF_topic_modeling(docs, no_features, no_topics, no_top_words):
     # NMF is able to use tf-idf
     tfidf_vecs, tfidf_feature_names = build_tfidf(docs, no_features=no_features)
     for word in tfidf_feature_names:
-        if word == 'های' or word == 'اند' or word == 'ها' or word == 'می' or word == 'ای' or word == 'نمی'\
+        if word == 'های' or word == 'اند' or word == 'ها' or word == 'می' or word == 'ای' or word == 'نمی' \
                 or word == '.' or word == '!' or word == ',' or word == ':':
             print(word, "in NMF")
 
@@ -204,9 +205,9 @@ def socialnets_main(data_set):
 
 if __name__ == '__main__':
     punctuation = ['.', ',', ':', ';', '!', '...', '?', '؟', '(', ')', ')', '(', '!!!', '!!', '…', '،', '\\', '/',
-                   '<', '>', '»', '«', '*', '^', '&', '%', '$', '=', '+']
+                   '<', '>', '»', '«', '*', '^', '&', '%', '$', '=', '+', '//t', '🆔', '#','✅','👈','🌐','http','//www']
     global type
-    type = 'economy_100%'
+    type = 'politics_100%'
     # _______________ loading the data and pre processing _______________
     dataset = pd.read_csv('../../data/' + type + '.csv', na_values='')
 

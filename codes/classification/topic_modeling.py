@@ -201,7 +201,7 @@ def socialnets_main(data_set):
 
 if __name__ == '__main__':
     global type
-    type = 'politics20%'
+    type = 'economy_100%'
     # _______________ loading the data and pre processing _______________
     dataset = pd.read_csv('../../data/' + type + '.csv', na_values='')
 

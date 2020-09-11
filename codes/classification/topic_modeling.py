@@ -70,9 +70,10 @@ def hazm_sentences_tokenize(docs, joined=True, numpy_array=True):
 def NMF_topic_modeling(docs, no_features, no_topics, no_top_words):
     # NMF is able to use tf-idf
     tfidf_vecs, tfidf_feature_names = build_tfidf(docs, no_features=no_features)
-    # for word in tfidf_feature_names:
-    #     if word == 'های' or word == 'اند' or word == 'ها' or word == 'می' or word == 'ای' or word == 'نمی':
-    #         print(word, "in NMF")
+    for word in tfidf_feature_names:
+        if word == 'های' or word == 'اند' or word == 'ها' or word == 'می' or word == 'ای' or word == 'نمی'\
+                or word == '.' or word == '!' or word == ',' or word == ':':
+            print(word, "in NMF")
 
     # Run NMF
     nmf = NMF(n_components=no_topics, random_state=1, alpha=.1, l1_ratio=.5, init='nndsvd').fit(tfidf_vecs)
@@ -104,7 +105,8 @@ def LDA_topic_modeling(docs, no_features, no_topics, no_top_words):
 
 def build_tfidf(docs, no_features):
     # use hazm word_tokenize func for tokenization
-    tfidf_vectorizer = TfidfVectorizer(tokenizer=word_tokenize, max_df=0.7, min_df=10, max_features=no_features, ngram_range=(1, 1))
+    tfidf_vectorizer = TfidfVectorizer(tokenizer=word_tokenize, max_df=0.7, min_df=10,
+                                       max_features=no_features, ngram_range=(1, 1), stop_words=punctuation)
     tfidf = tfidf_vectorizer.fit_transform(docs)
     tfidf_feature_names = tfidf_vectorizer.get_feature_names()
     return tfidf, tfidf_feature_names
@@ -112,7 +114,8 @@ def build_tfidf(docs, no_features):
 
 def build_tf(docs, no_features):
     # use hazm word_tokenize func for tokenization
-    tf_vectorizer = CountVectorizer(tokenizer=word_tokenize, max_df=0.7, min_df=10, max_features=no_features, ngram_range=(1, 1))
+    tf_vectorizer = CountVectorizer(tokenizer=word_tokenize, max_df=0.7, min_df=10,
+                                    max_features=no_features, ngram_range=(1, 1), stop_words=punctuation)
     tf = tf_vectorizer.fit_transform(docs)
     tf_feature_names = tf_vectorizer.get_feature_names()
     return tf, tf_feature_names
@@ -200,6 +203,7 @@ def socialnets_main(data_set):
 
 
 if __name__ == '__main__':
+    punctuation = ['.', ',', ':', ';', '!', '...', '?', '؟', '(', ')', ')', '(', '!!!', '…', '،', '\\', '/']
     global type
     type = 'economy_100%'
     # _______________ loading the data and pre processing _______________
@@ -214,4 +218,4 @@ if __name__ == '__main__':
 
     # all_docs_main(dataset)
     socialnets_main(socialnets_dataset)
-    news_main(news_dataset)
+    # news_main(news_dataset)

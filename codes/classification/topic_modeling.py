@@ -20,6 +20,12 @@ def display_current_time():
     return current_time
 
 
+def remove_null_values(data_set):
+    nan_indices = np.where(data_set['textField_nlp_normal'].isnull())[0]  # get index of null values
+    data_set = data_set.drop(nan_indices, axis=0)  # remove null values
+    return data_set
+
+
 def text_cleaner(docs):
     stop_words = open('../../resources/stopwords_list.txt', encoding="utf8").read().split('\n')
     normalizer = Normalizer(persian_numbers=False)
@@ -64,8 +70,6 @@ def hazm_sentences_tokenize(docs, joined=True, numpy_array=True):
 def NMF_topic_modeling(docs, no_features, no_topics, no_top_words):
     # NMF is able to use tf-idf
     tfidf_vecs, tfidf_feature_names = build_tfidf(docs, no_features=no_features)
-    print("tf_idf features:")
-    print(tfidf_feature_names)
     # for word in tfidf_feature_names:
     #     if word == 'های' or word == 'اند' or word == 'ها' or word == 'می' or word == 'ای' or word == 'نمی':
     #         print(word, "in NMF")
@@ -79,7 +83,6 @@ def NMF_topic_modeling(docs, no_features, no_topics, no_top_words):
     doc_topic = nmf.transform(tfidf_vecs)
     # find index of the best topic (topic with highest score) for each document
     doc_best_topic = np.argmax(doc_topic, axis=1)
-    # print(len(doc_best_topic), doc_best_topic[0:20])
     return topics_dict, doc_best_topic
 
 
@@ -96,11 +99,11 @@ def LDA_topic_modeling(docs, no_features, no_topics, no_top_words):
     doc_topic = lda.transform(tf_vecs)
     # find index of the best topic (topic with highest score) for each document
     doc_best_topic = np.argmax(doc_topic, axis=1)
-    # print(len(doc_best_topic), doc_best_topic)
     return topics_dict, doc_best_topic
 
 
 def build_tfidf(docs, no_features):
+    # use hazm word_tokenize func for tokenization
     tfidf_vectorizer = TfidfVectorizer(tokenizer=word_tokenize, max_df=0.7, min_df=10, max_features=no_features, ngram_range=(1, 1))
     tfidf = tfidf_vectorizer.fit_transform(docs)
     tfidf_feature_names = tfidf_vectorizer.get_feature_names()
@@ -108,6 +111,7 @@ def build_tfidf(docs, no_features):
 
 
 def build_tf(docs, no_features):
+    # use hazm word_tokenize func for tokenization
     tf_vectorizer = CountVectorizer(tokenizer=word_tokenize, max_df=0.7, min_df=10, max_features=no_features, ngram_range=(1, 1))
     tf = tf_vectorizer.fit_transform(docs)
     tf_feature_names = tf_vectorizer.get_feature_names()
@@ -115,8 +119,8 @@ def build_tf(docs, no_features):
 
 
 def return_topics(model, feature_names, no_top_words):
-    keys = []
-    values = []
+    keys = []  # topics name
+    values = []  # words related to each topic
     for topic_idx, topic in enumerate(model.components_):
         topic_name = "topic" + str(topic_idx)
         topic_words = " ".join([feature_names[i]
@@ -132,51 +136,82 @@ def display_topics(topics_dict):
         print(topic_words)
 
 
-def write_results(data_df, doc_best_topic, hashtags_filename, topics_dic, topics_filename):
-    data_df["topic_index"] = doc_best_topic
+def write_results(data__df, doc_best_topic, hashtags_filename, topics_dic, topics_filename):
+    data_df = data__df.assign(topic_index=doc_best_topic)
     data_df.to_csv('../../data/searched_hashtags/' + hashtags_filename + '.csv', index=False)
 
     with open('../../data/topics/' + topics_filename + '.json', 'w', encoding='utf-8') as fp:
         json.dump(topics_dic, fp, ensure_ascii=False)
 
 
-if __name__ == '__main__':
-    # _______________ loading the data and preprocessing _______________
-    dataset = pd.read_csv('../../data/politics20%.csv', na_values='')
-
-    print("search and remove null values", display_current_time())
-    nan_indices = np.where(dataset['textField_nlp_normal'].isnull())[0]  # get index of null values
-    dataset = dataset.drop(nan_indices, axis=0)  # remove null values
-    documents = dataset['textField_nlp_normal']
-
+def topic_modeling(data_set, num_features, num_topics, num_top_words, hashtags_filename, topics_filename):
+    documents = data_set['textField_nlp_normal']
     print("preprocessing using hazm", display_current_time())
     documents = hazm_sentences_tokenize(documents, numpy_array=False)
     # documents = text_cleaner(documents)
-    # _______________ topic modeling part _______________
-    number_of_features = 700
-    number_of_topics = 10
-    number_of_top_words = 10
 
+    # _______________ topic modeling part _______________
     print(" _____________NMF topic modeling______________", display_current_time())
     nmf_topics_dictionary, nmf_document_best_topic = NMF_topic_modeling(documents,
-                                                                        no_features=number_of_features,
-                                                                        no_topics=number_of_topics,
-                                                                        no_top_words=number_of_top_words)
+                                                                        no_features=num_features,
+                                                                        no_topics=num_topics,
+                                                                        no_top_words=num_top_words)
 
     print("_________________LDA topic modeling______________", display_current_time())
     lda_topics_dictionary, lda_document_best_topic = LDA_topic_modeling(documents,
-                                                                        no_features=number_of_features,
-                                                                        no_topics=number_of_topics,
-                                                                        no_top_words=number_of_top_words)
+                                                                        no_features=num_features,
+                                                                        no_topics=num_topics,
+                                                                        no_top_words=num_top_words)
     print(display_current_time())
 
     # _______________ write results _______________
-    write_results(dataset, doc_best_topic=nmf_document_best_topic,
-                  hashtags_filename='nmf_politics100%_with_topics',
+    write_results(data_set, doc_best_topic=nmf_document_best_topic,
+                  hashtags_filename='nmf_' + hashtags_filename,
                   topics_dic=nmf_topics_dictionary,
-                  topics_filename='nmf_politics_topics_dic')
+                  topics_filename='nmf_' + topics_filename)
 
-    write_results(dataset, doc_best_topic=lda_document_best_topic,
-                  hashtags_filename='lda_politics100%_with_topics',
+    write_results(data_set, doc_best_topic=lda_document_best_topic,
+                  hashtags_filename='lda_' + hashtags_filename,
                   topics_dic=lda_topics_dictionary,
-                  topics_filename='lda_politics_topics_dic')
+                  topics_filename='lda_' + topics_filename)
+
+
+# find topics of all data(news and social nets) together
+def all_docs_main(data_set):
+    topic_modeling(data_set, num_features=700, num_topics=10, num_top_words=10,
+                   hashtags_filename='all_' + type + '_with_topics',
+                   topics_filename='all_' + type + '_topics_dic')
+
+
+# find topics of just news data
+def news_main(data_set):
+    print("################ news topic modeling #################")
+    topic_modeling(data_set, num_features=500, num_topics=10, num_top_words=10,
+                   hashtags_filename='news_' + type + '_with_topics',
+                   topics_filename='news_' + type + '_topics_dic')
+
+
+# find topics of social nets (telegram, twitter and instagram) data
+def socialnets_main(data_set):
+    print("################## social networks topic modeing ##################")
+    topic_modeling(data_set, num_features=400, num_topics=10, num_top_words=10,
+                   hashtags_filename='socialnets_' + type + '_with_topics',
+                   topics_filename='socialnets_' + type + '_topics_dic')
+
+
+if __name__ == '__main__':
+    global type
+    type = 'economy_100%'
+    # _______________ loading the data and pre processing _______________
+    dataset = pd.read_csv('../../data/' + type + '.csv', na_values='')
+
+    print("search and remove null values", display_current_time())
+    dataset = remove_null_values(dataset)
+
+    mask = dataset['net_type'] == 'news'
+    news_dataset = dataset[mask]
+    socialnets_dataset = dataset[~mask]
+
+    # all_docs_main(dataset)
+    socialnets_main(socialnets_dataset)
+    news_main(news_dataset)

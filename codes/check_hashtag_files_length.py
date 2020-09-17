@@ -31,8 +31,9 @@ def extract_post_related_topics():
                                                                                  np.where(data == topic_index)[
                                                                                      0].shape[0]))
                 list_data.append([topic_index, file,np.where(data == topic_index)[0].shape[0]])
-    df = pd.DataFrame(list_data, columns=['topic_index', 'file_name', 'number_of_topics'],index=False)
-    df.to_csv('numbers.csv')
+
+    df = pd.DataFrame(list_data, columns=['topic_index', 'file_name', 'number_of_topics'])
+    df.to_csv('numbers.csv', index=False)
 
 
 extract_post_related_topics()

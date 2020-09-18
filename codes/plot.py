@@ -4,7 +4,7 @@ import os
 
 
 # create pie chart
-def pie_chart(labels, sizes, colors, title=None):
+def pie_chart(labels, sizes, colors, title=None, cat=None):
     fig = plt.gcf()
     fig.set_size_inches(2, 2)
     fig1, ax1 = plt.subplots()
@@ -18,7 +18,8 @@ def pie_chart(labels, sizes, colors, title=None):
     if title:
         plt.title(title)
     plt.show()
-    plt.savefig('{}.png'.format(title))
+    os.makedirs('../data/pycharts_png/{}'.format(cat), exist_ok=True)
+    plt.savefig('../data/pycharts_png/{}/{}.png'.format(cat, title))
 
 
 def topic_modeling_result(category: list):
@@ -32,7 +33,7 @@ def topic_modeling_result(category: list):
             percents_list = []
             for label in polarity_labels:
                 percents_list.append(len(topic_file[topic_file["label"] == label]) / len(topic_file))
-            pie_chart(polarity_chart_labels, percents_list, colors, file)
+            pie_chart(polarity_chart_labels, percents_list, colors, file, cat)
 
 
 if __name__ == '__main__':

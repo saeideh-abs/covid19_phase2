@@ -18,6 +18,7 @@ def pie_chart(labels, sizes, colors, title=None):
     if title:
         plt.title(title)
     plt.show()
+    plt.savefig('{}.png'.format(title))
 
 
 def topic_modeling_result(category: list):
@@ -25,7 +26,6 @@ def topic_modeling_result(category: list):
     polarity_chart_labels = ["positive", "negative", "neutral", "fact"]
     for cat in category:
         file_list = os.listdir('../data/pycharts_data/{}/'.format(cat))
-        print(file_list)
         for file in file_list:
             topic_file = pd.read_csv("../data/pycharts_data/{}/{}".format(cat, file))
             colors = ["green", "red", "gray", "orange"]
@@ -40,7 +40,7 @@ if __name__ == '__main__':
     economy = 'economy'
     politics = 'politics'
     health = 'health'
-    all_topics = [gharantineh, economy, health]
+    all_topics = [gharantineh, economy, health, politics]
     topic_modeling_result(all_topics)
 
     # emotion = pd.read_csv("../data/statistics/emotions.csv")
